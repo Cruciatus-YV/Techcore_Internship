@@ -4,7 +4,8 @@ public static class Task335_7_RefValTypes
 {
 	public static void Run()
 	{
-		var myClass = new MyClass() { Value = 100 };
+        Console.WriteLine("\nTask335.7 - Ссылочные и Значимые Типы\n");
+        var myClass = new MyClass() { Value = 100 };
 		Console.WriteLine($"Исходное myClass.Value: {myClass.Value}");
 		Modify(myClass);
         Console.WriteLine($"Значение myClass.Value после вызова метода Modify(myClass): {myClass.Value}");

@@ -10,8 +10,10 @@ Task335_5_LINQ.Run();
 
 Task335_6_OOP.Run();
 
-Task335_7_ref_val_types.Run();
+Task335_7_RefValTypes.Run();
 
 Task335_8_InheritancePolymorphism.Run();
+
+Task335_9_Intarfaces.Run();
 
 Console.ReadLine();
