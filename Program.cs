@@ -16,4 +16,6 @@ Task335_8_InheritancePolymorphism.Run();
 
 Task335_9_Intarfaces.Run();
 
+Task335_10_Record.Run();
+
 Console.ReadLine();
