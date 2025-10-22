@@ -10,4 +10,6 @@ Task335_5_LINQ.Run();
 
 Task335_6_OOP.Run();
 
+Task335_7_ref_val_types.Run();
+
 Console.ReadLine();
