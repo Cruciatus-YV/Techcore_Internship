@@ -17,7 +17,7 @@ public static class Task335_4_ArraysCollections
         Console.WriteLine("Исходный массив строк: ");
         PrintList(strings);
 
-        var filteredStrings = FilterStringsByLength(strings, 5).ToArray();
+        var filteredStrings = FilterStringsByLength(strings, 5);
         Console.WriteLine("Отфильтрованные строки:");
         PrintList(filteredStrings);
         Console.WriteLine(new string('-', 30));
@@ -44,10 +44,10 @@ public static class Task335_4_ArraysCollections
 
     static int FindMaxElement(int[] array) => array.Max();
 
-    static IEnumerable<string> FilterStringsByLength(List<string> stringList, int minLength)
+    static string[] FilterStringsByLength(List<string> stringList, int minLength)
     {
-        foreach (var item in stringList)
-            if (item.Length > minLength)
-                yield return item;
+        return stringList
+            .Where(item => item.Length > minLength)
+            .ToArray();
     }
 }
