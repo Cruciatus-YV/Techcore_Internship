@@ -5,7 +5,7 @@ public static class Task335_4_ArraysCollections
 	public static void Run()
     {
         Console.WriteLine("\nTask 335.4 - Работа с массивами и коллекциями");
-        int[] numbers = { 12, 45, 7, 23, 56, 89, 3, 67, 34, 91 };
+        int[] numbers = [ 12, 45, 7, 23, 56, 89, 3, 67, 34, 91 ];
         Console.WriteLine("\nИсходный массив чисел: ");
         PrintArray(numbers);
 
@@ -13,11 +13,11 @@ public static class Task335_4_ArraysCollections
         Console.WriteLine($"Максимальный элемент: {maxNumber}");
 
 
-        List<string> strings = new List<string> { "apple", "cat", "elephant", "dog", "butterfly", "hi", "programming" };
+        List<string> strings = [ "apple", "cat", "elephant", "dog", "butterfly", "hi", "programming" ];
         Console.WriteLine("Исходный массив строк: ");
         PrintList(strings);
 
-        List<string> filteredStrings = FilterStringsByLength(strings, 5);
+        var filteredStrings = FilterStringsByLength(strings, 5).ToArray();
         Console.WriteLine("Отфильтрованные строки:");
         PrintList(filteredStrings);
         Console.WriteLine(new string('-', 30));
@@ -28,7 +28,7 @@ public static class Task335_4_ArraysCollections
         Console.WriteLine(string.Join(", ", array));
     }
 
-    static void PrintList(List<string> list)
+    static void PrintList(IReadOnlyCollection<string> list)
     {
         if (list.Count == 0)
         {
@@ -42,27 +42,12 @@ public static class Task335_4_ArraysCollections
         }
     }
 
-    static int FindMaxElement(int[] array)
+    static int FindMaxElement(int[] array) => array.Max();
+
+    static IEnumerable<string> FilterStringsByLength(List<string> stringList, int minLength)
     {
-        return array.Max();
-    }
-
-    static List<string> FilterStringsByLength(List<string> stringList, int minLength)
-    {
-        if (stringList == null)
-            throw new ArgumentException("Список не может быть null");
-
-        List<string> result = new List<string>(stringList.Count);
-
-        for (int i = 0; i < stringList.Count; i++)
-        {
-            string str = stringList[i];
-            if (str != null && str.Length > minLength)
-            {
-                result.Add(str);
-            }
-        }
-
-        return result;
+        foreach (var item in stringList)
+            if (item.Length > minLength)
+                yield return item;
     }
 }

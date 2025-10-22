@@ -34,7 +34,7 @@ public class Task335_10_Record
         public int Year { get; init; } =
             (Year >= 1450 && Year <= DateTime.Now.Year + 1)
                 ? Year
-                : throw new ArgumentException($"Год издания должен быть между 1450 и {DateTime.Now.Year + 1}");
+                : throw new ArgumentException($"Год издания должен быть между 1450 и {DateTime.UtcNow.Year + 1}");
 
         public void DisplayInfo()
         {

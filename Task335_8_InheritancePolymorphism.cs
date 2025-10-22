@@ -19,7 +19,8 @@ public class Task335_8_InheritancePolymorphism
 		{
 			Console.WriteLine($"Фигура {counter++} - {shape.Name}, площадь = {shape.GetArea()}");
         }
-		Console.WriteLine(new string('-', 30));
+		Console.WriteLine($"Общая площадь фигур = {shapes.GetTotalArea()}");
+        Console.WriteLine(new string('-', 30));
     }
 
 	public abstract class Shape
@@ -57,4 +58,10 @@ public class Task335_8_InheritancePolymorphism
 			return Width * Height;
         }
     }
+}
+
+public static class ShapeExtensions
+{
+	public static double GetTotalArea(this IEnumerable<Task335_8_InheritancePolymorphism.Shape> shapes) 
+		=> shapes.Sum(shape => shape.GetArea());
 }
