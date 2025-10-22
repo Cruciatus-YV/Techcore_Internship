@@ -10,7 +10,8 @@ public static class Task335_5_LINQ
 
 		var processedNumbers = numbers.Where(n => n % 2 == 0).Select(n => n * 2).OrderByDescending(n => n); 
 
-		Console.WriteLine($"Исходные: {string.Join(", ", numbers)}");
+		Console.WriteLine($"\nИсходный массив: {string.Join(", ", numbers)}");
 		Console.WriteLine($"Результат: {string.Join(", ", processedNumbers)}");
+		Console.WriteLine(new string('-', 30));
 	}
 }

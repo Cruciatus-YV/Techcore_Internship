@@ -6,7 +6,7 @@ public static class Task335_4_ArraysCollections
     {
         Console.WriteLine("\nTask 335.4 - Работа с массивами и коллекциями");
         int[] numbers = { 12, 45, 7, 23, 56, 89, 3, 67, 34, 91 };
-        Console.WriteLine("Исходный массив чисел: ");
+        Console.WriteLine("\nИсходный массив чисел: ");
         PrintArray(numbers);
 
         int maxNumber = FindMaxElement(numbers);
@@ -20,6 +20,7 @@ public static class Task335_4_ArraysCollections
         List<string> filteredStrings = FilterStringsByLength(strings, 5);
         Console.WriteLine("Отфильтрованные строки:");
         PrintList(filteredStrings);
+        Console.WriteLine(new string('-', 30));
     }
 
     static void PrintArray(int[] array)

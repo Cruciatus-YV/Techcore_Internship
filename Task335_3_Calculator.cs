@@ -5,7 +5,7 @@
         Console.WriteLine("\nTask 335.3 - консольный калькулятор");
         try
         {
-            Console.WriteLine("Введите первый операнд: ");
+            Console.WriteLine("\nВведите первый операнд: ");
             if (!Double.TryParse(Console.ReadLine(), out double operand1))
             {
                 throw new ArgumentException("Ошибка: введено некорректное число для первого операнда.");
@@ -27,6 +27,7 @@
         {
             Console.WriteLine(ex.Message);
         }
+        Console.WriteLine(new string('-', 30));
     }
 
     public static void Calculator(double a, double b, char operation)

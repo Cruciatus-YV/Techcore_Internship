@@ -3,6 +3,7 @@
     public static void Run()
     {
         Console.WriteLine("Task 335.1 - базовый вывод");
-        Console.WriteLine("Hello, World!\n");
+        Console.WriteLine("\nHello, World!");
+        Console.WriteLine(new string('-', 30));
     }
 }

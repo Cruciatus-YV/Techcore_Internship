@@ -8,4 +8,6 @@ Task335_4_ArraysCollections.Run();
 
 Task335_5_LINQ.Run();
 
+Task335_6_OOP.Run();
+
 Console.ReadLine();

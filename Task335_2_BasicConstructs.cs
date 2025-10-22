@@ -4,8 +4,8 @@ public static class Task335_2_BasicConstructs
 {
     public static void Run()
     {
-        Console.WriteLine("Task 335.2 - базовые типы и конструкции языка C#");
-        Console.WriteLine("Введите целое число: ");
+        Console.WriteLine("\nTask 335.2 - базовые типы и конструкции языка C#");
+        Console.WriteLine("\nВведите целое число: ");
         Int32.TryParse(Console.ReadLine(), out int numberA);
 
         Console.WriteLine("Введите десятичную дробь (дробная доля через запятую): ");
@@ -69,5 +69,6 @@ public static class Task335_2_BasicConstructs
             Console.WriteLine($"Цикл while - итерация {index}");
             w--;
         }
+        Console.WriteLine(new string('-', 30));
     }
 }
