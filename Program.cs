@@ -43,4 +43,6 @@ Task337_8_SynchronizationContext.Run();
 
 await Task337_9_Progress.Run();
 
+await Task337_10_ValueTask.Run();
+
 Console.ReadLine();
