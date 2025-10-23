@@ -1,6 +1,4 @@
-﻿using Techcore_Internship.Module_2;
-
-//// Module 1
+﻿//// Module 1
 
 //Task335_1_BasicOutput.Run();
 
@@ -24,7 +22,10 @@
 //Task335_10_Record.Run();
 
 //Console.ReadLine();
+using Techcore_Internship.Module_2;
 
 Task337_1_ThreadVsTask.Run();
+
+await Task337_2_AsyncAwait.Run();
 
 Console.ReadLine();
