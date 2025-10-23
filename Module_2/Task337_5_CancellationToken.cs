@@ -24,7 +24,7 @@ public static class Task337_5_CancellationToken
     }
     public static void DoWork(CancellationToken token)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 100; i++)
         {
             if (token.IsCancellationRequested)
             {
