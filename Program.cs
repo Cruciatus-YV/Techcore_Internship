@@ -37,4 +37,6 @@ await Task337_5_CancellationToken.Run();
 
 await Task337_6_AsyncError.Run();
 
+await Task337_7_AsyncEnumerable.Run();
+
 Console.ReadLine();
