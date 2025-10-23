@@ -39,4 +39,6 @@ await Task337_6_AsyncError.Run();
 
 await Task337_7_AsyncEnumerable.Run();
 
+Task337_8_SynchronizationContext.Run();
+
 Console.ReadLine();
