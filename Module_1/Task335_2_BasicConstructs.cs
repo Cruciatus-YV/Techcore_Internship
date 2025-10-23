@@ -41,9 +41,6 @@ public static class Task335_2_BasicConstructs
             case false:
                 Console.WriteLine(result + $" Победитель - число {winner}.");
                 break;
-
-            default:
-                break;
         }
 
 

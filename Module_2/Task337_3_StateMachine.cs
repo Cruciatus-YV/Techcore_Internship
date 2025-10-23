@@ -1,6 +1,6 @@
 ﻿namespace Techcore_Internship.Module_2;
 
-public class Task337_3_StateMachine
+public static class Task337_3_StateMachine
 {
     public static void Run()
     {

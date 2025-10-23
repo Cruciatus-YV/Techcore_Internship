@@ -1,6 +1,6 @@
 ﻿namespace Techcore_Internship.Module_2;
 
-public class Task337_2_AsyncAwait
+public static class Task337_2_AsyncAwait
 {
     public static async Task Run()
     {
