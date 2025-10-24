@@ -1,9 +1,9 @@
-﻿using System;
+﻿namespace Techcore_Internship.Module_1;
 
 public static class Task335_6_OOP
 {
-	public static void Run()
-	{
+    public static void Run()
+    {
         Console.WriteLine("\nTask335.6 - Основы ООП: Классы и Объекты");
 
         try
@@ -33,44 +33,24 @@ public class Book
     private string _author;
     private int _year;
 
-    public string Title
-    {
-        get { return _title; }
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("Название книги не может быть пустым");
-            _title = value;
-        }
-    }
-
-    public string Author
-    {
-        get { return _author; }
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("Автор не может быть пустым");
-            _author = value;
-        }
-    }
-
-    public int Year
-    {
-        get { return _year; }
-        set
-        {
-            if (value < 1450 || value > DateTime.Now.Year + 1)
-                throw new ArgumentException($"Год издания должен быть между 1450 и {DateTime.Now.Year + 1}");
-            _year = value;
-        }
-    }
+    public string Title => _title;
+    public string Author => _author;
+    public int Year => _year;
 
     public Book(string title, string author, int year)
     {
-        Title = title;
-        Author = author;
-        Year = year;
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentException("Название книги не может быть пустым");
+            if (string.IsNullOrWhiteSpace(author))
+                throw new ArgumentException("Автор не может быть пустым");
+            if (year < 1450 || year > DateTime.Now.Year + 1)
+                throw new ArgumentException($"Год издания должен быть между 1450 и {DateTime.Now.Year + 1}");
+
+            _title = title;
+            _author = author;
+            _year = year;
+        }
     }
 
     public void DisplayInfo()

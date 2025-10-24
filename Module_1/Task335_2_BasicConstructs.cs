@@ -1,4 +1,4 @@
-﻿using System;
+﻿namespace Techcore_Internship.Module_1;
 
 public static class Task335_2_BasicConstructs
 {
@@ -41,11 +41,7 @@ public static class Task335_2_BasicConstructs
             case false:
                 Console.WriteLine(result + $" Победитель - число {winner}.");
                 break;
-
-            default:
-                break;
         }
-
 
         Console.WriteLine("Проверим работу цикла for :");
         Console.WriteLine("Введите количество итераций от 1 до 10: ");
