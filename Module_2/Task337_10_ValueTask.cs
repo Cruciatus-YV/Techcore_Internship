@@ -27,8 +27,7 @@ public class CacheService
 
     public async ValueTask<string> GetDataAsync(int id)
     {
-        string? data = string.Empty;
-        if (_cache.TryGetValue(id, out data))
+        if (_cache.TryGetValue(id, out var data))
         {
             Console.WriteLine($"Данные для ID {id} найдены в кэше");
             return data; 
