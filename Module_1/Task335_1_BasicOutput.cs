@@ -1,4 +1,6 @@
-﻿public static class Task335_1_BasicOutput
+﻿namespace Techcore_Internship.Module_1;
+
+public static class Task335_1_BasicOutput
 {
     public static void Run()
     {

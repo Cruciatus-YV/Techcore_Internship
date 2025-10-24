@@ -1,11 +1,11 @@
-﻿using System;
+﻿namespace Techcore_Internship.Module_1;
 
 public class Task335_10_Record
 {
-	public static void Run()
-	{
-		Console.WriteLine("\nTask335.10 - Records\n");
-		
+    public static void Run()
+    {
+        Console.WriteLine("\nTask335.10 - Records\n");
+
         var book1 = new Book("451° по Фаренгейту", "Рэй Брэдбери", 1953);
         var book2 = new Book("Мастер и Маргарита", "Михаил Булгаков", 1967);
         var book3 = new Book("Анна Каренина", "Лев Толстой", 1877);
@@ -42,4 +42,3 @@ public class Task335_10_Record
         }
     }
 }
-

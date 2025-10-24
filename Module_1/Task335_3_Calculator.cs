@@ -1,5 +1,7 @@
 ﻿using System.Data;
 
+namespace Techcore_Internship.Module_1;
+
 public static class Task335_3_Calculator
 {
     public static void Run()

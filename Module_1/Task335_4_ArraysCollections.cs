@@ -1,11 +1,11 @@
-﻿using System;
+﻿namespace Techcore_Internship.Module_1;
 
 public static class Task335_4_ArraysCollections
 {
-	public static void Run()
+    public static void Run()
     {
         Console.WriteLine("\nTask 335.4 - Работа с массивами и коллекциями");
-        int[] numbers = [ 12, 45, 7, 23, 56, 89, 3, 67, 34, 91 ];
+        int[] numbers = [12, 45, 7, 23, 56, 89, 3, 67, 34, 91];
         Console.WriteLine("\nИсходный массив чисел: ");
         PrintArray(numbers);
 
@@ -13,7 +13,7 @@ public static class Task335_4_ArraysCollections
         Console.WriteLine($"Максимальный элемент: {maxNumber}");
 
 
-        List<string> strings = [ "apple", "cat", "elephant", "dog", "butterfly", "hi", "programming" ];
+        List<string> strings = ["apple", "cat", "elephant", "dog", "butterfly", "hi", "programming"];
         Console.WriteLine("Исходный массив строк: ");
         PrintList(strings);
 

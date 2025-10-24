@@ -4,6 +4,8 @@ public static class Task337_10_ValueTask
 {
     public static async Task Run()
     {
+        Console.WriteLine("\nTask337.10 - ValueTask\n");
+
         var cacheService = new CacheService();
 
         Console.WriteLine("1-я Попытка получить пользователя с ID = 1");

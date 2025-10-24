@@ -1,4 +1,5 @@
-﻿using Techcore_Internship.Module_2;
+﻿using Techcore_Internship.Module_1;
+using Techcore_Internship.Module_2;
 
 // Module 1
 
@@ -23,7 +24,7 @@ Task335_9_Intarfaces.Run();
 
 Task335_10_Record.Run();
 
-//Module 2
+// Module 2
 
 Task337_1_ThreadVsTask.Run();
 
@@ -44,5 +45,3 @@ Task337_8_SynchronizationContext.Run();
 await Task337_9_Progress.Run();
 
 await Task337_10_ValueTask.Run();
-
-Console.ReadLine();

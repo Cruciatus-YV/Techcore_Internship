@@ -1,13 +1,13 @@
-﻿using System;
+﻿namespace Techcore_Internship.Module_1;
 
 public static class Task335_7_RefValTypes
 {
-	public static void Run()
-	{
+    public static void Run()
+    {
         Console.WriteLine("\nTask335.7 - Ссылочные и Значимые Типы\n");
         var myClass = new MyClass() { Value = 100 };
-		Console.WriteLine($"Исходное myClass.Value: {myClass.Value}");
-		Modify(myClass);
+        Console.WriteLine($"Исходное myClass.Value: {myClass.Value}");
+        Modify(myClass);
         Console.WriteLine($"Значение myClass.Value после вызова метода Modify(myClass): {myClass.Value}");
 
         var myStruct = new MyStruct() { Value = 100 };
