@@ -17,6 +17,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Service registration
 builder.Services.AddScoped<ITimeService, TimeService>();
+builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
 
