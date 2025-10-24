@@ -1,8 +1,9 @@
+using Techcore_Internship.WebApi.Services;
+using Techcore_Internship.WebApi.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Services
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -13,6 +14,9 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API для стажировки в Techcore"
     });
 });
+
+// Service registration
+builder.Services.AddScoped<ITimeService, TimeService>();
 
 var app = builder.Build();
 
