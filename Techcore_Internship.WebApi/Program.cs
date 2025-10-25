@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using Techcore_Internship.WebApi.Services;
 using Techcore_Internship.WebApi.Services.Interfaces;
 
@@ -20,8 +22,10 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
+
+// Task339_4_Middleware
 var ignoredPathes = new HashSet<string>() { "/swagger/v1/swagger.json" }; // Для примера игнорируем swagger в middleware
-app.Use(async (context, next) => 
+app.Use(async (context, next) =>
 {
     if (!ignoredPathes.Contains(context.Request.Path))
     {
@@ -35,10 +39,35 @@ app.Use(async (context, next) =>
         var endTime = DateTime.UtcNow;
         Console.WriteLine($"[{endTime:HH:mm:ss}] Completed {context.Request.Method} {context.Request.Path} - {context.Response.StatusCode} in {stopwatch.ElapsedMilliseconds}ms");
     }
-    else 
+    else
     {
         await next();
     }
+
+});
+
+// Task339_5_ProblemDetails
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(async context =>
+    {
+        var errorFeature = context.Features.Get<IExceptionHandlerFeature>();
+        var exception = errorFeature?.Error;
+
+        var problemDetails = new ProblemDetails
+        {
+            Type = exception?.GetType()?.Name,
+            Title = "Internal Server Error",
+            Status = 500,
+            Detail = exception?.Message,
+            Instance = context.Request.Path,
+        };
+
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/problem+json";
+
+        await context.Response.WriteAsJsonAsync(problemDetails);
+    });
 });
 
 // Configure the HTTP request pipeline.

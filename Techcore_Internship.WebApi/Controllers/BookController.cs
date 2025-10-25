@@ -16,6 +16,12 @@ public class BookController : ControllerBase
         _bookService = bookService;
     }
 
+    [HttpGet("error")]
+    public IActionResult Error()
+    {
+        throw new NotImplementedException();
+    }
+
     [HttpGet]
     public IActionResult GetAll()
     {
