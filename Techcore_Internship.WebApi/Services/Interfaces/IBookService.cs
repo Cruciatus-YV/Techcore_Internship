@@ -4,10 +4,10 @@ namespace Techcore_Internship.WebApi.Services.Interfaces;
 
 public interface IBookService
 {
-    List<BookDto> GetAll();
-    BookDto? Get(Guid id);
-    BookDto Create(CreateBookDto book);
-    bool Update(BookDto request);
-    bool UpdateTitle(Guid id, string request);
-    bool Delete(Guid id);
+    Task<List<BookDto>> GetAll();
+    Task<BookDto?> Get(Guid id);
+    Task<BookDto> Create(CreateBookDto book);
+    Task<bool> Update(BookDto request);
+    Task<bool> UpdateTitle(Guid id, string request);
+    Task<bool> Delete(Guid id);
 }

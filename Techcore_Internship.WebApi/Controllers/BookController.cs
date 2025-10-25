@@ -32,16 +32,17 @@ public class BookController : ControllerBase
         throw new NotImplementedException();
     }
 
+    // Task339_8_AsyncContollers
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        return Ok(_bookService.GetAll());
+        return Ok(await _bookService.GetAll());
     }
 
     [HttpGet("{id}")]
-    public IActionResult Get([FromRoute] Guid id)
+    public async Task<IActionResult> Get([FromRoute] Guid id)
     {
-        var book = _bookService.Get(id);
+        var book = await _bookService.Get(id);
 
         return book == null
             ? NotFound()
@@ -49,33 +50,33 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateBookDto book)
+    public async Task<IActionResult> Create([FromBody] CreateBookDto book)
     {
-        var newBook = _bookService.Create(book);
+        var newBook = await _bookService.Create(book);
 
         return Ok(newBook);
     }
     
     [HttpPut]
-    public IActionResult Update([FromBody] BookDto request)
+    public async Task<IActionResult> Update([FromBody] BookDto request)
     {
-        return _bookService.Update(request) 
+        return await _bookService.Update(request) 
             ? Ok() 
             : BadRequest();
     }
 
     [HttpPatch("update-title/{id}")]
-    public IActionResult UpdateTitle([FromRoute] Guid id, [FromBody] string request)
+    public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromBody] string request)
     {
-        return _bookService.UpdateTitle(id, request)
+        return await _bookService.UpdateTitle(id, request)
             ? Ok()
             : BadRequest();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete([FromRoute] Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
-        return _bookService.Delete(id)
+        return await _bookService.Delete(id)
             ? Ok()
             : BadRequest();
     }

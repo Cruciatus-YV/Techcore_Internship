@@ -11,18 +11,21 @@ public class BookService : IBookService
         new BookDto(Guid.NewGuid(), "Book Two", "Author Two", 1960)
     ];
 
-    public List<BookDto> GetAll()
+    public async Task<List<BookDto>> GetAll()
     {
+        await Task.Delay(100);
         return _books;
     }
 
-    public BookDto? Get(Guid id)
+    public async Task<BookDto?> Get(Guid id)
     {
+        await Task.Delay(100);
         return _books.FirstOrDefault(b => b.Id == id);
     }
 
-    public BookDto Create(CreateBookDto book)
+    public async Task<BookDto> Create(CreateBookDto book)
     {
+        await Task.Delay(100);
         var newBook = new BookDto(Guid.NewGuid(), book.Title, book.Author, book.Year);
 
         _books.Add(newBook);
@@ -30,8 +33,9 @@ public class BookService : IBookService
         return newBook;
     }
 
-    public bool Update(BookDto request)
+    public async Task<bool> Update(BookDto request)
     {
+        await Task.Delay(100);
         var existingBookIndex = _books.FindIndex(b => b.Id == request.Id);
         if (existingBookIndex < 0)
             return false;
@@ -41,8 +45,9 @@ public class BookService : IBookService
         return true;
     }
 
-    public bool UpdateTitle(Guid id, string request)
+    public async Task<bool> UpdateTitle(Guid id, string request)
     {
+        await Task.Delay(100);
         var existingBookIndex = _books.FindIndex(b => b.Id == id);
         if (existingBookIndex < 0)
             return false;
@@ -59,8 +64,9 @@ public class BookService : IBookService
         return true;
     }
 
-    public bool Delete(Guid id)
+    public async Task<bool> Delete(Guid id)
     {
+        await Task.Delay(100);
         var existingBookIndex = _books.FindIndex(b => b.Id == id);
         if (existingBookIndex < 0)
             return false;
