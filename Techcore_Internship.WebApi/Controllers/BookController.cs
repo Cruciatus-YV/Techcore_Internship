@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Techcore_Internship.WebApi.Dto;
+using Techcore_Internship.WebApi.Services;
 using Techcore_Internship.WebApi.Services.Interfaces;
 
 namespace Techcore_Internship.WebApi.Controllers;
@@ -10,10 +12,18 @@ namespace Techcore_Internship.WebApi.Controllers;
 public class BookController : ControllerBase
 {
     private readonly IBookService _bookService;
+    private readonly MySettings _mySettings;
 
-    public BookController(IBookService bookService)
+    public BookController(IBookService bookService, IOptions<MySettings> mySettings)
     {
+        _mySettings = mySettings.Value;
         _bookService = bookService;
+    }
+
+    [HttpGet("settings")]
+    public IActionResult Settings()
+    {
+        return Ok(_mySettings);
     }
 
     [HttpGet("error")]

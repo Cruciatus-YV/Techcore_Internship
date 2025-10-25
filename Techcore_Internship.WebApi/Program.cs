@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Techcore_Internship.WebApi;
 using Techcore_Internship.WebApi.Services;
 using Techcore_Internship.WebApi.Services.Interfaces;
 
@@ -23,6 +24,9 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API для стажировки в Techcore"
     });
 });
+
+// Task339_7_MySettings
+builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
 
 // Service registration
 builder.Services.AddScoped<ITimeService, TimeService>();
