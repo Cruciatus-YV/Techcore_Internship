@@ -7,8 +7,8 @@ public class BookService : IBookService
 {
     private static readonly List<BookDto> _books =
     [
-        new BookDto(Guid.NewGuid(), "Book One", "Author One"),
-        new BookDto(Guid.NewGuid(), "Book Two", "Author Two")
+        new BookDto(Guid.NewGuid(), "Book One", "Author One", 1950),
+        new BookDto(Guid.NewGuid(), "Book Two", "Author Two", 1960)
     ];
 
     public List<BookDto> GetAll()
@@ -21,9 +21,9 @@ public class BookService : IBookService
         return _books.FirstOrDefault(b => b.Id == id);
     }
 
-    public BookDto Create(BookDto book)
+    public BookDto Create(CreateBookDto book)
     {
-        var newBook = new BookDto(Guid.NewGuid(), book.Title, book.Author);
+        var newBook = new BookDto(Guid.NewGuid(), book.Title, book.Author, book.Year);
 
         _books.Add(newBook);
 

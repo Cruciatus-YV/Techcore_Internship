@@ -39,13 +39,8 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] BookDto book)
+    public IActionResult Create([FromBody] CreateBookDto book)
     {
-        if (string.IsNullOrWhiteSpace(book.Title) || string.IsNullOrWhiteSpace(book.Author))
-        {
-            return BadRequest("Title and Author cannot be empty.");
-        }
-
         var newBook = _bookService.Create(book);
 
         return Ok(newBook);

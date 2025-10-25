@@ -6,7 +6,7 @@ public interface IBookService
 {
     List<BookDto> GetAll();
     BookDto? Get(Guid id);
-    BookDto Create(BookDto book);
+    BookDto Create(CreateBookDto book);
     bool Update(BookDto request);
     bool UpdateTitle(Guid id, string request);
     bool Delete(Guid id);
