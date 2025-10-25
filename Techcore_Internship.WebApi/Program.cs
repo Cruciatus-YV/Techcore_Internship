@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using Techcore_Internship.WebApi;
 using Techcore_Internship.WebApi.Services;
 using Techcore_Internship.WebApi.Services.Interfaces;
@@ -23,6 +24,15 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API для стажировки в Techcore"
     });
+
+    // Task339_9_SwaggerXmlComments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 // Task339_7_MySettings
