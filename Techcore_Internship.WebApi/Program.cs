@@ -20,6 +20,26 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
+var ignoredPathes = new HashSet<string>() { "/swagger/v1/swagger.json" }; // Для примера игнорируем swagger в middleware
+app.Use(async (context, next) => 
+{
+    if (!ignoredPathes.Contains(context.Request.Path))
+    {
+        var startTime = DateTime.UtcNow;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        Console.WriteLine($"[{startTime:HH:mm:ss}] Started {context.Request.Method} {context.Request.Path}");
+
+        await next();
+
+        stopwatch.Stop();
+        var endTime = DateTime.UtcNow;
+        Console.WriteLine($"[{endTime:HH:mm:ss}] Completed {context.Request.Method} {context.Request.Path} - {context.Response.StatusCode} in {stopwatch.ElapsedMilliseconds}ms");
+    }
+    else 
+    {
+        await next();
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
