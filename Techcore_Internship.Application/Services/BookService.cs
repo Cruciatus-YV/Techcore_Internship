@@ -10,12 +10,14 @@ namespace Techcore_Internship.Application.Services;
 public class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
+    private readonly IAuthorRepository _authorRepository;
     private readonly ApplicationDbContext _dbContext;
 
-    public BookService(IBookRepository bookRepository, ApplicationDbContext dbContext)
+    public BookService(IBookRepository bookRepository, ApplicationDbContext dbContext, IAuthorRepository authorRepository)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
+        _authorRepository = authorRepository;
     }
 
     public async Task<List<BookResponseDto>> GetAll()
@@ -164,5 +166,51 @@ public class BookService : IBookService
             .Where(b => b.Year == year && !b.IsDeleted)
             .Select(b => new BookResponseDto(b.Id, b.Title, b.Year, b.IsDeleted, b.AuthorId))
             .ToList();
+    }
+
+    public async Task<BookWithAuthorResponseDto> CreateBookWithAuthor(CreateBookWithAuthorRequestDto request)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            var newAuthor = new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = request.AuthorFirstName,
+                LastName = request.AuthorLastName,
+                IsDeleted = false
+            };
+
+            await _authorRepository.InsertAsync(newAuthor);
+
+            var newBook = new BookEntity
+            {
+                Id = Guid.NewGuid(),
+                Title = request.Title,
+                Year = request.Year,
+                IsDeleted = false,
+                AuthorId = newAuthor.Id
+            };
+
+            await _bookRepository.InsertAsync(newBook);
+
+            await transaction.CommitAsync();
+
+            return new BookWithAuthorResponseDto(
+                newBook.Id,
+                newBook.Title,
+                newBook.Year,
+                newBook.IsDeleted,
+                newBook.AuthorId,
+                newAuthor.FirstName,
+                newAuthor.LastName
+            );
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }

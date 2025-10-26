@@ -90,6 +90,14 @@ public class BooksController : ControllerBase
         return Ok(newBook);
     }
 
+    [HttpPost("with-author")]
+    public async Task<IActionResult> CreateWithAuthor([FromBody] CreateBookWithAuthorRequestDto request)
+    {
+        var result = await _bookService.CreateBookWithAuthor(request);
+
+        return Ok(result);
+    }
+
     /// <summary>
     /// Обновить существующую книгу
     /// </summary>

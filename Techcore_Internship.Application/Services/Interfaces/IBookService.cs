@@ -11,4 +11,5 @@ public interface IBookService
     Task<bool> Update(BookResponseDto request);
     Task<bool> UpdateTitle(Guid id, string request);
     Task<bool> Delete(Guid id);
+    Task<BookWithAuthorResponseDto> CreateBookWithAuthor(CreateBookWithAuthorRequestDto request);
 }
