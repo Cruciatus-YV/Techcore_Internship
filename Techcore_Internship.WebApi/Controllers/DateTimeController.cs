@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Techcore_Internship.WebApi.Services.Interfaces;
+using Techcore_Internship.Application.Services.Interfaces;
 
 namespace Techcore_Internship.WebApi.Controllers;
 

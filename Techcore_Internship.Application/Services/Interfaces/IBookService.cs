@@ -1,6 +1,6 @@
-﻿using Techcore_Internship.WebApi.Dto;
+﻿using Techcore_Internship.Contracts.DTOs;
 
-namespace Techcore_Internship.WebApi.Services.Interfaces;
+namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IBookService
 {

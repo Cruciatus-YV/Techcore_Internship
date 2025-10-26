@@ -3,9 +3,9 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using Techcore_Internship.Application.Services;
+using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.WebApi;
-using Techcore_Internship.WebApi.Services;
-using Techcore_Internship.WebApi.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +13,10 @@ builder.Services.AddControllers();
 
 // Task339_6_FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddValidatorsFromAssemblies(
+    AppDomain.CurrentDomain.GetAssemblies()
+        .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
+);
 
 // Task339_10_Health Checks
 builder.Services.AddHealthChecks();

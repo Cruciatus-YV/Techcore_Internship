@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Techcore_Internship.WebApi.Dto;
-using Techcore_Internship.WebApi.Services.Interfaces;
+using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts.DTOs;
 
 namespace Techcore_Internship.WebApi.Controllers;
 

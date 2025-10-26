@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.Module_2;
+﻿namespace Techcore_Internship.ConsoleApp.Module_2;
 
 public static class Task337_3_StateMachine
 {

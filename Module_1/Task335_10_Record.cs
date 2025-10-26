@@ -1,4 +1,5 @@
-﻿namespace Techcore_Internship.Module_1;
+﻿namespace Techcore_Internship.ConsoleApp.Module_1;
+
 
 public class Task335_10_Record
 {

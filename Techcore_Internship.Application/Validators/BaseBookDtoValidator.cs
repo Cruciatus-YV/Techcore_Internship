@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
-using Techcore_Internship.WebApi.Dto;
+using Techcore_Internship.Contracts.DTOs;
 
-namespace Techcore_Internship.WebApi.Validators;
+namespace Techcore_Internship.Application.Validators;
 
 public abstract class BaseBookDtoValidator<T> : AbstractValidator<T>
-    where T : CreateBookDto
+where T : CreateBookDto
 {
     protected BaseBookDtoValidator()
     {

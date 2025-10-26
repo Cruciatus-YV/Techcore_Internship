@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.WebApi.Services.Interfaces;
+﻿namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface ITimeService
 {

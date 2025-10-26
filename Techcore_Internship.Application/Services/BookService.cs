@@ -1,14 +1,18 @@
-﻿using Techcore_Internship.WebApi.Dto;
-using Techcore_Internship.WebApi.Services.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts.DTOs;
 
-namespace Techcore_Internship.WebApi.Services;
+namespace Techcore_Internship.Application.Services;
 
 public class BookService : IBookService
 {
     private static readonly List<BookDto> _books =
     [
         new BookDto(Guid.NewGuid(), "Book One", "Author One", 1950),
-        new BookDto(Guid.NewGuid(), "Book Two", "Author Two", 1960)
+    new BookDto(Guid.NewGuid(), "Book Two", "Author Two", 1960)
     ];
 
     public async Task<List<BookDto>> GetAll()
@@ -76,4 +80,3 @@ public class BookService : IBookService
         return true;
     }
 }
-
