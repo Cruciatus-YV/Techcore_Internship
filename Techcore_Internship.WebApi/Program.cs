@@ -8,6 +8,8 @@ using System.Reflection;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Data;
+using Techcore_Internship.Data.Repositories;
+using Techcore_Internship.Data.Repositories.Interfaces;
 using Techcore_Internship.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +68,13 @@ builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySetti
 // Service registration
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IAuthorService, AuthorService>();
+
+// Repository registration
+builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+
 
 var app = builder.Build();
 

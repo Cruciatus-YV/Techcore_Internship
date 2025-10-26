@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
-using Techcore_Internship.Contracts.DTOs;
+using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Responses;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
@@ -82,7 +83,7 @@ public class BooksController : ControllerBase
     /// <param name="book">DTO с данными для создания книги</param>
     /// <returns>Созданная книга</returns>
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateBookDto book)
+    public async Task<IActionResult> Create([FromBody] CreateBookRequestDto book)
     {
         var newBook = await _bookService.Create(book);
 
@@ -95,7 +96,7 @@ public class BooksController : ControllerBase
     /// <param name="request">DTO с обновленными данными книги</param>
     /// <returns>200 OK при успешном обновлении, 400 Bad Request при ошибке</returns>
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] BookDto request)
+    public async Task<IActionResult> Update([FromBody] BookResponseDto request)
     {
         return await _bookService.Update(request)
             ? Ok()

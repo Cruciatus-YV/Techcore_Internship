@@ -1,13 +1,14 @@
-﻿using Techcore_Internship.Contracts.DTOs;
+﻿using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Responses;
 
 namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IBookService
 {
-    Task<List<BookDto>> GetAll();
-    Task<BookDto?> Get(Guid id);
-    Task<BookDto> Create(CreateBookDto book);
-    Task<bool> Update(BookDto request);
+    Task<List<BookResponseDto>> GetAll();
+    Task<BookResponseDto?> Get(Guid id);
+    Task<BookResponseDto> Create(CreateBookRequestDto book);
+    Task<bool> Update(BookResponseDto request);
     Task<bool> UpdateTitle(Guid id, string request);
     Task<bool> Delete(Guid id);
 }

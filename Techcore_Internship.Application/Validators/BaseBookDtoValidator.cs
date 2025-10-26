@@ -1,10 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs;
+using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Responses;
 
 namespace Techcore_Internship.Application.Validators;
 
 public abstract class BaseBookDtoValidator<T> : AbstractValidator<T>
-where T : CreateBookDto
+where T : CreateBookRequestDto
 {
     protected BaseBookDtoValidator()
     {
@@ -18,10 +19,10 @@ where T : CreateBookDto
     }
 }
 
-public class CreateBookDtoValidator : BaseBookDtoValidator<CreateBookDto>
+public class CreateBookDtoValidator : BaseBookDtoValidator<CreateBookRequestDto>
 {
 }
 
-public class BookDtoValidator : BaseBookDtoValidator<BookDto>
+public class BookDtoValidator : BaseBookDtoValidator<BookResponseDto>
 {
 }
