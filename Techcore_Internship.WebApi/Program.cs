@@ -2,9 +2,12 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Reflection;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Data;
 using Techcore_Internship.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +23,22 @@ builder.Services.AddValidatorsFromAssemblies(
 
 // Task339_10_Health Checks
 builder.Services.AddHealthChecks();
+
+// Task341_1_EntityFrameworkCore_PostgreSQL
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_DB_Connection")));
+
+try
+{
+    using var connection = new NpgsqlConnection(builder.Configuration.GetConnectionString("Techcore_Internship_DB_Connection"));
+    connection.Open();
+    Console.WriteLine("Database connection successful!");
+    connection.Close();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Database connection failed: {ex.Message}");
+}
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

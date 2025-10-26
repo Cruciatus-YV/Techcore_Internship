@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: Techcore_Internship_DB_Container
+    environment:
+      POSTGRES_DB: Techcore_Internship_DB
+      POSTGRES_USER: Cruciatus
+      POSTGRES_PASSWORD: 12345qwerty
+    ports:
+      - "5432:5432"
+    volumes:
+      - Techcore_Internship_DB_Data:/var/lib/postgresql/data
+
+volumes:
+  Techcore_Internship_DB_Data:
