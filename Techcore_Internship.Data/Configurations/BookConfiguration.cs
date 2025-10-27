@@ -22,8 +22,7 @@ public class BookConfiguration : IEntityTypeConfiguration<BookEntity>
         builder.Property(b => b.IsDeleted)
             .IsRequired();
 
-        builder.HasOne(b => b.Author)
-            .WithMany(a => a.Books)
-            .HasForeignKey(b => b.AuthorId);
+        builder.HasMany(a => a.Authors)
+            .WithMany(b => b.Books);
     }
 }

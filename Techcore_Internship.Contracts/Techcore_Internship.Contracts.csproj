@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Techcore_Internship.Domain\Techcore_Internship.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: Techcore_Internship_DB
       POSTGRES_USER: Cruciatus
       POSTGRES_PASSWORD: 12345qwerty
+    restart: always
     ports:
       - "5432:5432"
     volumes:

@@ -42,7 +42,7 @@ where TId : struct
 
     public async Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync(id, cancellationToken);
+        return await _asNoTracking.FirstOrDefaultAsync(x => x.Id.Equals(id), cancellationToken);
     }
 
     public async Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)

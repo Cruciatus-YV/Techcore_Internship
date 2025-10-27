@@ -8,7 +8,6 @@ public class BookEntity : IHaveId<Guid>, IHaveIsDeleted
     public string Title { get; set; }
     public int Year { get; set; }
     public bool IsDeleted { get; set; }
-    public Guid AuthorId { get; set; }
 
-    public virtual AuthorEntity Author { get; set; }
+    public virtual List<AuthorEntity> Authors { get; set; }
 }

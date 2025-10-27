@@ -1,3 +1,3 @@
 ﻿namespace Techcore_Internship.Contracts.DTOs.Requests;
 
-public record CreateAuthorRequestDto(string FirstName, string LastName, bool IsDeleted);
+public record CreateAuthorRequestDto(string FirstName, string LastName);
