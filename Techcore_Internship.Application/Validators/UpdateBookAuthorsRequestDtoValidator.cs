@@ -1,18 +1,18 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class UpdateBookAuthorsRequestDtoValidator : AbstractValidator<UpdateBookAuthorsRequestDto>
+public class UpdateBookAuthorsRequestValidator : AbstractValidator<UpdateBookAuthorsRequest>
 {
-    public UpdateBookAuthorsRequestDtoValidator()
+    public UpdateBookAuthorsRequestValidator()
     {
         RuleFor(x => x)
             .Must(x => x.NewAuthors?.Any() == true || x.ExistingAuthorIds?.Any() == true)
             .WithMessage("Должен быть указан хотя бы один автор (новый или существующий).");
 
         RuleForEach(x => x.NewAuthors)
-            .SetValidator(new CreateAuthorRequestDtoValidator())
+            .SetValidator(new CreateAuthorRequestValidator())
             .When(x => x.NewAuthors != null);
     }
 }

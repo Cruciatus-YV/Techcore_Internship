@@ -1,8 +1,10 @@
 ﻿using Techcore_Internship.Application.Services.Interfaces;
-using Techcore_Internship.Contracts.DTOs.Requests;
-using Techcore_Internship.Contracts.DTOs.Responses;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
 using Techcore_Internship.Data;
-using Techcore_Internship.Data.Repositories.Interfaces;
+using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
+using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Application.Services;
@@ -11,40 +13,48 @@ public class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
     private readonly IAuthorRepository _authorRepository;
+    private readonly IBookDapperRepository _bookDapperRepository;
     private readonly ApplicationDbContext _dbContext;
 
-    public BookService(IBookRepository bookRepository, ApplicationDbContext dbContext, IAuthorRepository authorRepository)
+    public BookService(IBookRepository bookRepository, ApplicationDbContext dbContext, IAuthorRepository authorRepository, IBookDapperRepository bookDapperRepository)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
         _authorRepository = authorRepository;
+        _bookDapperRepository = bookDapperRepository;
     }
 
-    public async Task<BookResponseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<BookResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
-        return (book == null) ? null : new BookResponseDto(book);
+        return (book == null) ? null : new BookResponse(book);
     }
 
-    public async Task<List<BookResponseDto>?> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken)
+    public async Task<List<BookResponse>?> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken = default)
     {
         var books = await _bookRepository.GetByAuthorIdAsync(authorId, cancellationToken);
-        return books?.Select(b => new BookResponseDto(b)).ToList();
+        return books?.Select(b => new BookResponse(b)).ToList();
+    }
+    
+    public async Task<List<BookResponse>?> GetAllWithAuthorsFromDapperAsync(CancellationToken cancellationToken = default)
+    {
+        var books = await _bookDapperRepository.GetAllWithAuthorsAsync(cancellationToken);
+        return books;
     }
 
-    public async Task<List<BookResponseDto>?> GetAllWithAuthorsAsync(CancellationToken cancellationToken)
+    public async Task<List<BookResponse>?> GetAllWithAuthorsAsync(CancellationToken cancellationToken = default)
     {
         var books = await _bookRepository.GetAllWithAuthorsAsync(cancellationToken);
-        return books?.Select(b => new BookResponseDto(b)).ToList();
+        return books?.Select(b => new BookResponse(b)).ToList();
     }
 
-    public async Task<List<BookResponseDto>?> GetByYearAsync(int year, CancellationToken cancellationToken)
+    public async Task<List<BookResponse>?> GetByYearAsync(int year, CancellationToken cancellationToken = default)
     {
         var books = await _bookRepository.GetByYearAsync(year, cancellationToken);
-        return books?.Select(b => new BookResponseDto(b)).ToList();
+        return books?.Select(b => new BookResponse(b)).ToList();
     }
 
-    public async Task<BookResponseDto> CreateAsync(CreateBookRequestDto request, CancellationToken cancellationToken)
+    public async Task<BookResponse> CreateAsync(CreateBookRequest request, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -66,10 +76,10 @@ public class BookService : IBookService
                 Authors = foundedAuthors
             };
 
-            await _bookRepository.InsertAsync(newBook, cancellationToken);
+            await _bookRepository.InsertEntityAsync(newBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return new BookResponseDto(newBook);
+            return new BookResponse(newBook);
         }
         catch (Exception)
         {
@@ -78,7 +88,7 @@ public class BookService : IBookService
         }
     }
 
-    public async Task<Guid> CreateWithAuthorsAsync(CreateBookWithAuthorsRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateWithAuthorsAsync(CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -92,7 +102,7 @@ public class BookService : IBookService
                 IsDeleted = false
             }).ToList();
 
-            await _authorRepository.InsertListAsync(newAuthors, cancellationToken);
+            await _authorRepository.InsertListEntityAsync(newAuthors, cancellationToken);
 
             var existingAuthors = new List<AuthorEntity>();
             if (request.ExistingAuthorIds?.Any() == true)
@@ -121,7 +131,7 @@ public class BookService : IBookService
                 Authors = allAuthors
             };
 
-            await _bookRepository.InsertAsync(newBook, cancellationToken);
+            await _bookRepository.InsertEntityAsync(newBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return newBook.Id;
@@ -133,7 +143,7 @@ public class BookService : IBookService
         }
     }
 
-    public async Task<bool> UpdateAsync(Guid bookId, UpdateBookRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(Guid bookId, UpdateBookRequest request, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -152,7 +162,7 @@ public class BookService : IBookService
                 existingBook.Authors = updatedAuthors;
             }
 
-            await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+            await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return true;
@@ -164,7 +174,7 @@ public class BookService : IBookService
         }
     }
 
-    public async Task<bool> UpdateAuthorsAsync(Guid id, UpdateBookAuthorsRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAuthorsAsync(Guid id, UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -184,7 +194,7 @@ public class BookService : IBookService
                 existingBook.Authors = updatedAuthors;
             }
 
-            await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+            await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return true;
@@ -196,44 +206,44 @@ public class BookService : IBookService
         }
     }
 
-    public async Task<bool> UpdateBookInfoAsync(Guid bookId, UpdateBookInfoRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateBookInfoAsync(Guid bookId, UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
     {
-        var existingBook = await _bookRepository.GetByIdAsync(bookId, cancellationToken);
+        var existingBook = await _bookRepository.GetEntityByIdAsync(bookId, cancellationToken);
         if (existingBook == null || existingBook.IsDeleted)
             return false;
 
         existingBook.Title = request.Title;
         existingBook.Year = request.Year;
-        return await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+        return await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
     }
 
     public async Task<bool> UpdateTitleAsync(Guid bookId, string title, CancellationToken cancellationToken = default)
     {
-        var existingBook = await _bookRepository.GetByIdAsync(bookId, cancellationToken);
+        var existingBook = await _bookRepository.GetEntityByIdAsync(bookId, cancellationToken);
         if (existingBook == null || existingBook.IsDeleted)
             return false;
 
         existingBook.Title = title;
-        return await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+        return await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
     }
 
     public async Task<bool> UpdateYearAsync(Guid bookId, int year, CancellationToken cancellationToken = default)
     {
-        var existingBook = await _bookRepository.GetByIdAsync(bookId, cancellationToken);
+        var existingBook = await _bookRepository.GetEntityByIdAsync(bookId, cancellationToken);
         if (existingBook == null || existingBook.IsDeleted)
             return false;
 
         existingBook.Year = year;
-        return await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+        return await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            var existingBook = await _bookRepository.GetByIdAsync(id, cancellationToken);
+            var existingBook = await _bookRepository.GetEntityByIdAsync(id, cancellationToken);
 
             if (existingBook == null)
                 return false;
@@ -245,7 +255,7 @@ public class BookService : IBookService
 
             existingBook.IsDeleted = true;
 
-            await _bookRepository.UpdateAsync(existingBook, cancellationToken);
+            await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return true;
@@ -257,14 +267,14 @@ public class BookService : IBookService
         }
     }
 
-    public async Task<bool> Exists(Guid id, CancellationToken cancellationToken)
+    public async Task<bool> Exists(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _bookRepository.Exist(id, cancellationToken);
+        return await _bookRepository.IsEntityExists(id, cancellationToken);
     }
 
-    private async Task<List<AuthorEntity>> GetUpdatedAuthorsAsync(List<CreateAuthorRequestDto>? newAuthors,
+    private async Task<List<AuthorEntity>> GetUpdatedAuthorsAsync(List<CreateAuthorRequest>? newAuthors,
                                                                   List<Guid>? existingAuthorIds,
-                                                                  CancellationToken cancellationToken)
+                                                                  CancellationToken cancellationToken = default)
     {
         var authors = new List<AuthorEntity>();
 
@@ -278,7 +288,7 @@ public class BookService : IBookService
                 IsDeleted = false
             }).ToList();
 
-            await _authorRepository.InsertListAsync(newAuthorEntities, cancellationToken);
+            await _authorRepository.InsertListEntityAsync(newAuthorEntities, cancellationToken);
             authors.AddRange(newAuthorEntities);
         }
 

@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class UpdateBookRequestDtoValidator : AbstractValidator<UpdateBookRequestDto>
+public class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
 {
-    public UpdateBookRequestDtoValidator()
+    public UpdateBookRequestValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty()
@@ -20,7 +20,7 @@ public class UpdateBookRequestDtoValidator : AbstractValidator<UpdateBookRequest
             .WithMessage($"Год издания не может быть больше {DateTime.Now.Year + 1}.");
 
         RuleForEach(x => x.NewAuthors)
-            .SetValidator(new CreateAuthorRequestDtoValidator())
+            .SetValidator(new CreateAuthorRequestValidator())
             .When(x => x.NewAuthors != null);
     }
 }

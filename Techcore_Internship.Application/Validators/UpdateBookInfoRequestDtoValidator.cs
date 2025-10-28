@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class UpdateBookInfoRequestDtoValidator : AbstractValidator<UpdateBookInfoRequestDto>
+public class UpdateBookInfoRequestValidator : AbstractValidator<UpdateBookInfoRequest>
 {
-    public UpdateBookInfoRequestDtoValidator()
+    public UpdateBookInfoRequestValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty()

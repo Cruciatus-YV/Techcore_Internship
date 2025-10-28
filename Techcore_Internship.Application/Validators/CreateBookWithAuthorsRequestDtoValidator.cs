@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class CreateBookWithAuthorsRequestDtoValidator : AbstractValidator<CreateBookWithAuthorsRequestDto>
+public class CreateBookWithAuthorsRequestValidator : AbstractValidator<CreateBookWithAuthorsRequest>
 {
-    public CreateBookWithAuthorsRequestDtoValidator()
+    public CreateBookWithAuthorsRequestValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty()
@@ -24,7 +24,7 @@ public class CreateBookWithAuthorsRequestDtoValidator : AbstractValidator<Create
             .WithMessage("Книга должна иметь хотя бы одного автора (нового или существующего).");
 
         RuleForEach(x => x.NewAuthors)
-            .SetValidator(new CreateAuthorRequestDtoValidator())
+            .SetValidator(new CreateAuthorRequestValidator())
             .When(x => x.NewAuthors != null);
     }
 }

@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class CreateAuthorRequestDtoValidator : AbstractValidator<CreateAuthorRequestDto>
+public class CreateAuthorRequestValidator : AbstractValidator<CreateAuthorRequest>
 {
-    public CreateAuthorRequestDtoValidator()
+    public CreateAuthorRequestValidator()
     {
         RuleFor(x => x.FirstName)
             .NotEmpty()

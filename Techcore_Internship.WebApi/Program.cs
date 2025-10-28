@@ -1,16 +1,16 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using System.Reflection;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Data;
-using Techcore_Internship.Data.Repositories;
-using Techcore_Internship.Data.Repositories.Interfaces;
+using Techcore_Internship.Data.Repositories.Dapper;
+using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
+using Techcore_Internship.Data.Repositories.EF;
+using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.WebApi;
+using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,18 +29,6 @@ builder.Services.AddHealthChecks();
 // Task341_1_EntityFrameworkCore_PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_DB_Connection")));
-
-try
-{
-    using var connection = new NpgsqlConnection(builder.Configuration.GetConnectionString("Techcore_Internship_DB_Connection"));
-    connection.Open();
-    Console.WriteLine("Database connection successful!");
-    connection.Close();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Database connection failed: {ex.Message}");
-}
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -74,58 +62,14 @@ builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
-
+builder.Services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
+builder.Services.AddScoped<IBookDapperRepository, BookDapperRepository>();
 
 var app = builder.Build();
 
-// Task339_4_Middleware
-var ignoredPathes = new HashSet<string>() { "/swagger/v1/swagger.json" }; // Для примера игнорируем swagger в middleware
-app.Use(async (context, next) =>
-{
-    if (!ignoredPathes.Contains(context.Request.Path))
-    {
-        var startTime = DateTime.UtcNow;
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        Console.WriteLine($"[{startTime:HH:mm:ss}] Started {context.Request.Method} {context.Request.Path}");
+app.UseRequestLogging(); // Task339_4_Middleware
+app.UseGlobalExceptionHandler(); // Task339_5_ProblemDetails
 
-        await next();
-
-        stopwatch.Stop();
-        var endTime = DateTime.UtcNow;
-        Console.WriteLine($"[{endTime:HH:mm:ss}] Completed {context.Request.Method} {context.Request.Path} - {context.Response.StatusCode} in {stopwatch.ElapsedMilliseconds}ms");
-    }
-    else
-    {
-        await next();
-    }
-
-});
-
-// Task339_5_ProblemDetails
-app.UseExceptionHandler(exceptionHandlerApp =>
-{
-    exceptionHandlerApp.Run(async context =>
-    {
-        var errorFeature = context.Features.Get<IExceptionHandlerFeature>();
-        var exception = errorFeature?.Error;
-
-        var problemDetails = new ProblemDetails
-        {
-            Type = exception?.GetType()?.Name,
-            Title = "Internal Server Error",
-            Status = 500,
-            Detail = exception?.Message,
-            Instance = context.Request.Path,
-        };
-
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/problem+json";
-
-        await context.Response.WriteAsJsonAsync(problemDetails);
-    });
-});
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -1,10 +1,15 @@
-﻿using Techcore_Internship.Contracts.DTOs.Requests;
-using Techcore_Internship.Contracts.DTOs.Responses;
-using Techcore_Internship.Data.Repositories.Interfaces;
+﻿using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
 
 namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IAuthorService
 {
-    Task<List<AuthorResponseDto>?> GetByIdsAsync(List<Guid> requestedIds, CancellationToken cancellationToken);
+    Task<AuthorResponse> CreateAsync(CreateAuthorRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<List<AuthorResponse>> GetAllAsync(CancellationToken cancellationToken = default, bool includeBooks = false);
+    Task<AuthorResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<List<AuthorResponse>?> GetByIdsAsync(List<Guid> requestedIds, CancellationToken cancellationToken = default);
+    Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(Guid id, UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default);
 }

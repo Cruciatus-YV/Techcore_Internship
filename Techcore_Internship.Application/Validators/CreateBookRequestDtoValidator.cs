@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using Techcore_Internship.Contracts.DTOs.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 
 namespace Techcore_Internship.Application.Validators;
 
-public class CreateBookRequestDtoValidator : AbstractValidator<CreateBookRequestDto>
+public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
 {
-    public CreateBookRequestDtoValidator()
+    public CreateBookRequestValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty()

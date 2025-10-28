@@ -1,27 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Techcore_Internship.Contracts.DTOs.Requests;
-using Techcore_Internship.Data.Repositories.Interfaces;
+using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Data.Repositories;
+namespace Techcore_Internship.Data.Repositories.EF;
 
 public class BookRepository(ApplicationDbContext dbContext) : GenericRepository<BookEntity, Guid>(dbContext), IBookRepository
 {
-    public async Task<List<BookEntity>> GetAllWithAuthorsAsync(CancellationToken cancellationToken)
+    public async Task<List<BookEntity>> GetAllWithAuthorsAsync(CancellationToken cancellationToken = default)
     {
         return await _asNoTracking
             .Include(b => b.Authors)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<BookEntity?> GetByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<BookEntity?> GetByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _asNoTracking
             .Include(b => b.Authors.Where(a => !a.IsDeleted))
             .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted, cancellationToken);
     }
 
-    public async Task<List<BookEntity>> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken)
+    public async Task<List<BookEntity>> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken = default)
     {
         return await _asNoTracking
             .Include(b => b.Authors.Where(a => !a.IsDeleted))
@@ -29,7 +28,7 @@ public class BookRepository(ApplicationDbContext dbContext) : GenericRepository<
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<BookEntity>> GetByYearAsync(int year, CancellationToken cancellationToken)
+    public async Task<List<BookEntity>> GetByYearAsync(int year, CancellationToken cancellationToken = default)
     {
         return await _asNoTracking
             .Include(b => b.Authors.Where(a => !a.IsDeleted))
