@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.Module_1;
+﻿namespace Techcore_Internship.ConsoleApp.Module_1;
 
 public static class Task335_1_BasicOutput
 {

@@ -1,5 +1,5 @@
-﻿using Techcore_Internship.Module_1;
-using Techcore_Internship.Module_2;
+﻿using Techcore_Internship.ConsoleApp.Module_1;
+using Techcore_Internship.ConsoleApp.Module_2;
 
 // Module 1
 
