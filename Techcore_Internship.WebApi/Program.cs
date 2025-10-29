@@ -2,14 +2,15 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using Techcore_Internship.Application.Services;
+using Techcore_Internship.Application.Services.Cache;
+using Techcore_Internship.Application.Services.Entities;
 using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts;
 using Techcore_Internship.Data;
 using Techcore_Internship.Data.Repositories.Dapper;
 using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
 using Techcore_Internship.Data.Repositories.EF;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
-using Techcore_Internship.WebApi;
 using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,12 +24,18 @@ builder.Services.AddValidatorsFromAssemblies(
         .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
 );
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = builder.Configuration["RedisSettings:InstanceName"];
+});
+
 // Task339_10_Health Checks
 builder.Services.AddHealthChecks();
 
 // Task341_1_EntityFrameworkCore_PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_DB_Connection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -52,11 +59,13 @@ builder.Services.AddSwaggerGen(c =>
 
 // Task339_7_MySettings
 builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
+builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("RedisSettings"));
 
 // Service registration
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
 // Repository registration
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
