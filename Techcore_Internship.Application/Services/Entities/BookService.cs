@@ -29,6 +29,11 @@ public class BookService : IBookService
         _bookDapperRepository = bookDapperRepository;
         _cache = cache;
     }
+    public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var book = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
+        return book == null ? null : new BookResponse(book);
+    }
 
     public async Task<BookResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {

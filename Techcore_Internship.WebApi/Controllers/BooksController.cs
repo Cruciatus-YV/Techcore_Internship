@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts;
@@ -47,6 +48,20 @@ public class BooksController : ControllerBase
     public IActionResult Error()
     {
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Получить книгу по идентификатору (Кеширование с помощью OutputCache)
+    /// </summary>
+    /// <param name="id">GUID идентификатор книги</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>Книга с указанным идентификатором или 404 если не найдена</returns>
+    [HttpGet("{id}/output-cache")]
+    [OutputCache(PolicyName = "BookPolicy")]
+    public async Task<IActionResult> GetOutputCacheTest([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var book = await _bookService.GetByIdOutputCacheTestAsync(id, cancellationToken);
+        return book == null ? NotFound() : Ok(book);
     }
 
     /// <summary>

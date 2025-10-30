@@ -33,6 +33,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 // Task339_10_Health Checks
 builder.Services.AddHealthChecks();
 
+builder.Services.AddOutputCache(options =>
+    options.AddPolicy("BookPolicy", policy => 
+        policy.Expire(TimeSpan.FromSeconds(60))
+        .Tag("books"))
+);  
+
 // Task341_1_EntityFrameworkCore_PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
@@ -87,6 +93,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseOutputCache();
 app.MapControllers();
 
 app.MapHealthChecks("/healthz");
