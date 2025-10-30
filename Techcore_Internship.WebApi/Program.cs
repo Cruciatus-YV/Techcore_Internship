@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using System.Reflection;
 using Techcore_Internship.Application.Services.Cache;
 using Techcore_Internship.Application.Services.Entities;
@@ -61,6 +62,12 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+});
+
+builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("MongoDB");
+    return new MongoClient(connectionString);
 });
 
 // Task339_7_MySettings

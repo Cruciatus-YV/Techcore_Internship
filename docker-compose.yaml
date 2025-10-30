@@ -22,7 +22,22 @@ services:
       - Redis_Data:/data
     command: redis-server --appendonly yes
 
+  mongo:
+    image: mongo:7.0
+    container_name: Techcore_Internship_Mongo_Container
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: Cruciatus
+      MONGO_INITDB_ROOT_PASSWORD: 12345qwerty
+    volumes:
+      - Mongo_Data:/data/db
+      - Mongo_Config:/data/configdb
+
 volumes:
   Postgres_Data:
   Redis_Data:
+  Mongo_Data:
+  Mongo_Config:
     
