@@ -20,20 +20,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Task339_6_FluentValidation
+// FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
     AppDomain.CurrentDomain.GetAssemblies()
         .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
 );
 
+// Redis
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = builder.Configuration["RedisSettings:InstanceName"];
 });
 
-// Task339_10_Health Checks
+// Health Checks
 builder.Services.AddHealthChecks();
 
 builder.Services.AddOutputCache(options =>
@@ -42,7 +43,7 @@ builder.Services.AddOutputCache(options =>
         .Tag("books"))
 );  
 
-// Task341_1_EntityFrameworkCore_PostgreSQL
+// PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 

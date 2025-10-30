@@ -30,7 +30,7 @@ public class BookDapperRepository(IConfiguration configuration) : BaseDapperRepo
 
         var items = await connection.QueryAsync<BookAuthorJoinResult>(sql);
 
-        var booksDict = items
+        return items
             .GroupBy(x => new { x.BookId, x.Title, x.Year })
             .Select(g =>
             {
@@ -41,8 +41,45 @@ public class BookDapperRepository(IConfiguration configuration) : BaseDapperRepo
                 return new BookResponse(g.Key.BookId, g.Key.Title, g.Key.Year, authors);
             })
             .ToList();
+    }
 
-        return booksDict;
+    public async Task<BookResponse?> GetByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var sql = @"
+        SELECT 
+            b.""Id"" AS BookId,
+            b.""Title"", 
+            b.""Year"",
+            a.""Id"" AS AuthorId,
+            a.""FirstName"",
+            a.""LastName""
+        FROM ""Books"" b
+        LEFT JOIN ""AuthorEntityBookEntity"" ba ON b.""Id"" = ba.""BooksId""
+        LEFT JOIN ""Authors"" a ON ba.""AuthorsId"" = a.""Id"" AND a.""IsDeleted"" = false
+        WHERE b.""Id"" = @BookId AND b.""IsDeleted"" = false
+        ORDER BY b.""Id"", a.""Id""";
+
+        using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        var parameters = new { BookId = id };
+
+        var items = await connection.QueryAsync<BookAuthorJoinResult>(sql, parameters);
+
+        if (!items.Any())
+            return null;
+
+        return items
+            .GroupBy(x => new { x.BookId, x.Title, x.Year })
+            .Select(g =>
+            {
+                var authors = g.Where(x => x.AuthorId != Guid.Empty)
+                              .Select(x => new AuthorReferenceResponse(x.AuthorId, x.FirstName, x.LastName))
+                              .ToList();
+
+                return new BookResponse(g.Key.BookId, g.Key.Title, g.Key.Year, authors);
+            })
+            .FirstOrDefault();
     }
 
     private class BookAuthorJoinResult

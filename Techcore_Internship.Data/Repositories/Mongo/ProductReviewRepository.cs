@@ -19,6 +19,11 @@ public class ProductReviewRepository : IProductReviewRepository
         return await _reviews.Find(review => review.Id == id).FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<List<ProductReviewEntity>> GetByProductIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _reviews.Find(review => review.ProductId == id).ToListAsync(cancellationToken);
+    }
+
     public async Task<Guid> CreateAsync(ProductReviewEntity review, CancellationToken cancellationToken)
     {
         review.Id = Guid.NewGuid();

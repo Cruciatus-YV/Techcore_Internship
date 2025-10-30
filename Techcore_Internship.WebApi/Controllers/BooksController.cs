@@ -103,6 +103,19 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
+    /// Получить книгу по идентификатору (Dapper)
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("dapper/{id}")]
+    public async Task<IActionResult> GetFromDapper([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var book = await _bookService.GetByIdWithDapperAsync(id, cancellationToken);
+        return book == null ? NotFound() : Ok(book);
+    }
+
+    /// <summary>
     /// Получить все книги с авторами (Dapper)
     /// </summary>
     /// <param name="cancellationToken = default">Токен отмены</param>
@@ -125,6 +138,21 @@ public class BooksController : ControllerBase
     {
         var books = await _bookService.GetByYearAsync(year, cancellationToken);
         return Ok(books ?? new List<BookResponse>());
+    }
+
+    /// <summary>
+    /// Получить детали товара
+    /// </summary>
+    /// <param name="id">Идентификатор книги</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>Детали товара</returns>
+    [HttpGet("details/{id}")]
+    public async Task<IActionResult> GetProductDetails([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var details = await _bookService.GetProductDetailsAsync(id, cancellationToken);
+        return details == null 
+            ? NotFound() 
+            : Ok(details);
     }
 
     /// <summary>

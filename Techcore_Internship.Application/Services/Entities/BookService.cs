@@ -2,9 +2,11 @@
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
+using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
 using Techcore_Internship.Data;
 using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
+using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Application.Services.Entities;
@@ -15,19 +17,22 @@ public class BookService : IBookService
     private readonly IAuthorRepository _authorRepository;
     private readonly IBookDapperRepository _bookDapperRepository;
     private readonly IRedisCacheService _cache;
+    private readonly IProductReviewRepository _productReviewRepository;
     private readonly ApplicationDbContext _dbContext;
 
     public BookService(IBookRepository bookRepository,
                        ApplicationDbContext dbContext,
                        IAuthorRepository authorRepository,
                        IBookDapperRepository bookDapperRepository,
-                       IRedisCacheService cache)
+                       IRedisCacheService cache,
+                       IProductReviewRepository productReviewRepository)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
         _authorRepository = authorRepository;
         _bookDapperRepository = bookDapperRepository;
         _cache = cache;
+        _productReviewRepository = productReviewRepository;
     }
     public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -59,6 +64,15 @@ public class BookService : IBookService
                 return bookEntities?.Select(b => new BookResponse(b)).ToList();
             },
             TimeSpan.FromMinutes(15));
+    }
+
+    public async Task<BookResponse?> GetByIdWithDapperAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = $"book_dapper_{id}";
+
+        return await _cache.GetOrCreateAsync<BookResponse?>(cacheKey,
+            async () =>  await _bookDapperRepository.GetByIdWithAuthorsAsync(id, cancellationToken),
+            TimeSpan.FromMinutes(30));
     }
 
     public async Task<List<BookResponse>?> GetAllWithAuthorsFromDapperAsync(CancellationToken cancellationToken = default)
@@ -413,5 +427,20 @@ public class BookService : IBookService
         }
 
         return authors;
+    }
+
+    public async Task<ProductDetailsResponse?> GetProductDetailsAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var bookTask = GetByIdAsync(id, cancellationToken);
+        var reviewsTask = _productReviewRepository.GetByProductIdAsync(id, cancellationToken);
+
+        await Task.WhenAll(bookTask, reviewsTask);
+
+        var book = bookTask.Result;
+        var reviews = reviewsTask.Result;
+
+        return book == null 
+            ? null 
+            : new ProductDetailsResponse(book, reviews?.Select(r => new ProductReviewResponse(r))?.ToList() ?? []);
     }
 }
