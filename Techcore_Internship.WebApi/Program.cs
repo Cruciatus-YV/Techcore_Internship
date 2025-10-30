@@ -12,6 +12,8 @@ using Techcore_Internship.Data.Repositories.Dapper;
 using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
 using Techcore_Internship.Data.Repositories.EF;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
+using Techcore_Internship.Data.Repositories.Mongo;
+using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +88,7 @@ builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
 builder.Services.AddScoped<IBookDapperRepository, BookDapperRepository>();
+builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 
 var app = builder.Build();
 
