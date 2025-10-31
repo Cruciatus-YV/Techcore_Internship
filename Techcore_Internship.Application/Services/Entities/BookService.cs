@@ -432,7 +432,7 @@ public class BookService : IBookService
     public async Task<ProductDetailsResponse?> GetProductDetailsAsync(Guid id, CancellationToken cancellationToken)
     {
         var bookTask = GetByIdAsync(id, cancellationToken);
-        var reviewsTask = _productReviewRepository.GetByProductIdAsync(id, cancellationToken);
+        var reviewsTask = _productReviewRepository.GetListByPredicateAsync(review => review.ProductId == id, cancellationToken);
 
         await Task.WhenAll(bookTask, reviewsTask);
 

@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using System.Reflection;
+using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Cache;
 using Techcore_Internship.Application.Services.Entities;
 using Techcore_Internship.Application.Services.Interfaces;
@@ -38,10 +39,10 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddHealthChecks();
 
 builder.Services.AddOutputCache(options =>
-    options.AddPolicy("BookPolicy", policy => 
+    options.AddPolicy("BookPolicy", policy =>
         policy.Expire(TimeSpan.FromSeconds(60))
         .Tag("books"))
-);  
+);
 
 // PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -73,7 +74,7 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
     return new MongoClient(connectionString);
 });
 
-// Task339_7_MySettings
+// MySettings
 builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("RedisSettings"));
 
@@ -82,6 +83,7 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+builder.Services.AddHostedService<AverageRatingCalculatorService>();
 
 // Repository registration
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));

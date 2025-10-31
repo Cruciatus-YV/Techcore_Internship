@@ -1,6 +1,8 @@
 ﻿using MongoDB.Driver;
+using System.Linq.Expressions;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.Domain.Entities;
+using static Dapper.SqlMapper;
 
 namespace Techcore_Internship.Data.Repositories.Mongo;
 
@@ -14,14 +16,14 @@ public class ProductReviewRepository : IProductReviewRepository
         _reviews = database.GetCollection<ProductReviewEntity>("reviews");
     }
 
-    public async Task<ProductReviewEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<List<ProductReviewEntity>> GetListByPredicateAsync(Expression<Func<ProductReviewEntity, bool>> predicate, CancellationToken cancellationToken)
     {
-        return await _reviews.Find(review => review.Id == id).FirstOrDefaultAsync(cancellationToken);
+        return await _reviews.Find(predicate).ToListAsync(cancellationToken);
     }
 
-    public async Task<List<ProductReviewEntity>> GetByProductIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<ProductReviewEntity?> GetByPredicateAsync(Expression<Func<ProductReviewEntity, bool>> predicate, CancellationToken cancellationToken)
     {
-        return await _reviews.Find(review => review.ProductId == id).ToListAsync(cancellationToken);
+        return await _reviews.Find(predicate).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Guid> CreateAsync(ProductReviewEntity review, CancellationToken cancellationToken)

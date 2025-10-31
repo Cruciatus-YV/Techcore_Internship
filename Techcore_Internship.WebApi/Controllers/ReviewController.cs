@@ -18,7 +18,14 @@ namespace Techcore_Internship.WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            var productReview = await _productReviewRepository.GetByIdAsync(id, cancellationToken);
+            var productReview = await _productReviewRepository.GetByPredicateAsync(review => review.Id == id, cancellationToken);
+            return Ok(productReview);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var productReview = await _productReviewRepository.GetListByPredicateAsync(review => true, cancellationToken);
             return Ok(productReview);
         }
 
