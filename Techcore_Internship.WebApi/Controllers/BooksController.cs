@@ -74,6 +74,7 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookService.GetByIdAsync(id, cancellationToken);
+        
         return book == null ? NotFound() : Ok(book);
     }
 
@@ -141,7 +142,7 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// Получить детали товара
+    /// Получить детали товара (В нашем случае товар - книга)
     /// </summary>
     /// <param name="id">Идентификатор книги</param>
     /// <param name="cancellationToken">Токен отмены</param>

@@ -13,7 +13,6 @@ public class AverageRatingCalculatorService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptions<RedisSettings> _redisSettings;
 
-    // ТОЛЬКО Singleton зависимости в конструкторе!
     public AverageRatingCalculatorService(
         IServiceProvider serviceProvider,
         IOptions<RedisSettings> redisSettings)
@@ -48,7 +47,6 @@ public class AverageRatingCalculatorService : BackgroundService
 
         var reviewRepository = scope.ServiceProvider.GetRequiredService<IProductReviewRepository>();
         var cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-
         var reviews = await reviewRepository.GetListByPredicateAsync(x => true, cancellationToken);
 
         if (!reviews.Any())
@@ -74,7 +72,7 @@ public class AverageRatingCalculatorService : BackgroundService
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_redisSettings.Value.DefaultExpirationMinutes)
                 }, cancellationToken);
 
-                Console.WriteLine($"Product {productGroup.Key}: {averageRating} from {reviewCount} reviews");
+                Console.WriteLine($"Product {productGroup.Key}: average rating {averageRating} from {reviewCount} reviews");
             }
             catch (Exception ex)
             {

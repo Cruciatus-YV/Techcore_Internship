@@ -1,4 +1,7 @@
-﻿using Techcore_Internship.Application.Services.Interfaces;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
+using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
@@ -17,7 +20,9 @@ public class BookService : IBookService
     private readonly IAuthorRepository _authorRepository;
     private readonly IBookDapperRepository _bookDapperRepository;
     private readonly IRedisCacheService _cache;
+    private readonly IDistributedCache _distributedCache;
     private readonly IProductReviewRepository _productReviewRepository;
+    private readonly IOptions<RedisSettings> _redisSettings;
     private readonly ApplicationDbContext _dbContext;
 
     public BookService(IBookRepository bookRepository,
@@ -25,7 +30,9 @@ public class BookService : IBookService
                        IAuthorRepository authorRepository,
                        IBookDapperRepository bookDapperRepository,
                        IRedisCacheService cache,
-                       IProductReviewRepository productReviewRepository)
+                       IProductReviewRepository productReviewRepository,
+                       IOptions<RedisSettings> redisSettings,
+                       IDistributedCache distributedCache)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
@@ -33,6 +40,8 @@ public class BookService : IBookService
         _bookDapperRepository = bookDapperRepository;
         _cache = cache;
         _productReviewRepository = productReviewRepository;
+        _redisSettings = redisSettings;
+        _distributedCache = distributedCache;
     }
     public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -431,16 +440,18 @@ public class BookService : IBookService
 
     public async Task<ProductDetailsResponse?> GetProductDetailsAsync(Guid id, CancellationToken cancellationToken)
     {
+        var key = $"{_redisSettings.Value.InstanceName}average_book_{id}_rating";
         var bookTask = GetByIdAsync(id, cancellationToken);
         var reviewsTask = _productReviewRepository.GetListByPredicateAsync(review => review.ProductId == id, cancellationToken);
-
-        await Task.WhenAll(bookTask, reviewsTask);
+        var avgBookRatingTask = _distributedCache.GetStringAsync(key, cancellationToken);
+        await Task.WhenAll(bookTask, reviewsTask, avgBookRatingTask);
 
         var book = bookTask.Result;
         var reviews = reviewsTask.Result;
+        var avgBookRating = avgBookRatingTask.Result;
 
         return book == null 
             ? null 
-            : new ProductDetailsResponse(book, reviews?.Select(r => new ProductReviewResponse(r))?.ToList() ?? []);
+            : new ProductDetailsResponse(book, reviews?.Select(r => new ProductReviewResponse(r))?.ToList() ?? [], avgBookRating ?? "No rating yet");
     }
 }
