@@ -16,7 +16,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
             .Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseNpgsql(configuration.GetConnectionString("Techcore_Internship_DB_Connection"));
+        optionsBuilder.UseNpgsql(configuration.GetConnectionString("Techcore_Internship_Postgres_Connection"));
 
         return new ApplicationDbContext(optionsBuilder.Options);
     }

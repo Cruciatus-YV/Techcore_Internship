@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
 
@@ -49,6 +51,20 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
+    /// Получить книгу по идентификатору (Кеширование с помощью OutputCache)
+    /// </summary>
+    /// <param name="id">GUID идентификатор книги</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>Книга с указанным идентификатором или 404 если не найдена</returns>
+    [HttpGet("{id}/output-cache")]
+    [OutputCache(PolicyName = "BookPolicy")]
+    public async Task<IActionResult> GetOutputCacheTest([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var book = await _bookService.GetByIdOutputCacheTestAsync(id, cancellationToken);
+        return book == null ? NotFound() : Ok(book);
+    }
+
+    /// <summary>
     /// Получить книгу по идентификатору
     /// </summary>
     /// <param name="id">GUID идентификатор книги</param>
@@ -58,6 +74,7 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookService.GetByIdAsync(id, cancellationToken);
+        
         return book == null ? NotFound() : Ok(book);
     }
 
@@ -87,6 +104,19 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
+    /// Получить книгу по идентификатору (Dapper)
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("dapper/{id}")]
+    public async Task<IActionResult> GetFromDapper([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var book = await _bookService.GetByIdWithDapperAsync(id, cancellationToken);
+        return book == null ? NotFound() : Ok(book);
+    }
+
+    /// <summary>
     /// Получить все книги с авторами (Dapper)
     /// </summary>
     /// <param name="cancellationToken = default">Токен отмены</param>
@@ -109,6 +139,21 @@ public class BooksController : ControllerBase
     {
         var books = await _bookService.GetByYearAsync(year, cancellationToken);
         return Ok(books ?? new List<BookResponse>());
+    }
+
+    /// <summary>
+    /// Получить детали товара (В нашем случае товар - книга)
+    /// </summary>
+    /// <param name="id">Идентификатор книги</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>Детали товара</returns>
+    [HttpGet("details/{id}")]
+    public async Task<IActionResult> GetProductDetails([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var details = await _bookService.GetProductDetailsAsync(id, cancellationToken);
+        return details == null 
+            ? NotFound() 
+            : Ok(details);
     }
 
     /// <summary>
