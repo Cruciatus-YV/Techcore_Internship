@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Techcore_Internship.Domain\Techcore_Internship.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\Entities\User\Responses\" />
+  </ItemGroup>
+
 </Project>

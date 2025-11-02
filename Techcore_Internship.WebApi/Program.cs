@@ -98,6 +98,7 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
