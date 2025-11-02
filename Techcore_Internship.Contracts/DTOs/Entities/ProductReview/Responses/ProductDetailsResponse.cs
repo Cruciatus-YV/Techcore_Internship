@@ -1,5 +1,4 @@
 ﻿using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
-using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
 

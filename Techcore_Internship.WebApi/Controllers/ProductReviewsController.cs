@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
-using Techcore_Internship.Domain.Entities;
+using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Requests;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
@@ -8,11 +8,11 @@ namespace Techcore_Internship.WebApi.Controllers;
 [Route("[controller]")]
 public class ProductReviewsController : ControllerBase
 {
-    private readonly IProductReviewRepository _productReviewRepository;
+    private readonly IProductReviewService _productReviewService;
 
-    public ProductReviewsController(IProductReviewRepository productReviewRepository)
+    public ProductReviewsController(IProductReviewService productReviewService)
     {
-        _productReviewRepository = productReviewRepository;
+        _productReviewService = productReviewService;
     }
 
     /// <summary>
@@ -26,7 +26,7 @@ public class ProductReviewsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var productReview = await _productReviewRepository.GetByPredicateAsync(review => review.Id == id, cancellationToken);
+        var productReview = await _productReviewService.GetByIdAsync(id, cancellationToken);
         return Ok(productReview);
     }
 
@@ -39,8 +39,36 @@ public class ProductReviewsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var productReview = await _productReviewRepository.GetListByPredicateAsync(review => true, cancellationToken);
+        var productReview = await _productReviewService.GetAllAsync(cancellationToken);
         return Ok(productReview);
+    }
+
+    /// <summary>
+    /// Получить отзывы по идентификатору продукта
+    /// </summary>
+    /// <param name="productId">Идентификатор продукта</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>Список отзывов продукта</returns>
+    /// <response code="200">Успешное получение отзывов</response>
+    [HttpGet("product/{productId}")]
+    public async Task<IActionResult> GetByProductId([FromRoute] Guid productId, CancellationToken cancellationToken)
+    {
+        var productReviews = await _productReviewService.GetByProductIdAsync(productId, cancellationToken);
+        return Ok(productReviews);
+    }
+
+    /// <summary>
+    /// Получить отзывы по идентификатору пользователя
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="cancellationToken">Токен отмены</param>
+    /// <returns>Список отзывов пользователя</returns>
+    /// <response code="200">Успешное получение отзывов</response>
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetByUserId([FromRoute] Guid userId, CancellationToken cancellationToken)
+    {
+        var productReviews = await _productReviewService.GetByUserIdAsync(userId, cancellationToken);
+        return Ok(productReviews);
     }
 
     /// <summary>
@@ -52,9 +80,9 @@ public class ProductReviewsController : ControllerBase
     /// <response code="200">Отзыв успешно создан</response>
     /// <response code="400">Некорректные данные отзыва</response>
     [HttpPost]
-    public async Task<IActionResult> Create(ProductReviewEntity review, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromForm] CreateProductReviewRequest review, CancellationToken cancellationToken)
     {
-        var productReviewId = await _productReviewRepository.CreateAsync(review, cancellationToken);
+        var productReviewId = await _productReviewService.CreateAsync(review, cancellationToken);
         return Ok(productReviewId);
     }
 
@@ -69,9 +97,9 @@ public class ProductReviewsController : ControllerBase
     /// <response code="404">Отзыв не найден</response>
     /// <response code="400">Некорректные данные отзыва</response>
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update([FromRoute] Guid id, ProductReviewEntity review, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update([FromRoute] Guid id, UpdateProductReviewRequest review, CancellationToken cancellationToken)
     {
-        var updatedProductReview = await _productReviewRepository.UpdateAsync(id, review, cancellationToken);
+        var updatedProductReview = await _productReviewService.UpdateAsync(id, review, cancellationToken);
         return Ok(updatedProductReview);
     }
 
@@ -86,7 +114,7 @@ public class ProductReviewsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var result = await _productReviewRepository.DeleteAsync(id, cancellationToken);
+        var result = await _productReviewService.DeleteAsync(id, cancellationToken);
         return Ok(result);
     }
 }

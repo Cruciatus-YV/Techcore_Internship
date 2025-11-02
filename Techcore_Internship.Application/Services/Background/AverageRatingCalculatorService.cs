@@ -47,7 +47,9 @@ public class AverageRatingCalculatorService : BackgroundService
 
         var reviewRepository = scope.ServiceProvider.GetRequiredService<IProductReviewRepository>();
         var cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-        var reviews = await reviewRepository.GetListByPredicateAsync(x => true, cancellationToken);
+
+        // Используем новый метод GetAllAsync
+        var reviews = await reviewRepository.GetAllAsync(cancellationToken);
 
         if (!reviews.Any())
         {

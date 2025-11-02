@@ -442,7 +442,7 @@ public class BookService : IBookService
     {
         var key = $"{_redisSettings.Value.InstanceName}average_book_{id}_rating";
         var bookTask = GetByIdAsync(id, cancellationToken);
-        var reviewsTask = _productReviewRepository.GetListByPredicateAsync(review => review.ProductId == id, cancellationToken);
+        var reviewsTask = _productReviewRepository.GetByProductIdAsync(id, cancellationToken);
         var avgBookRatingTask = _distributedCache.GetStringAsync(key, cancellationToken);
         await Task.WhenAll(bookTask, reviewsTask, avgBookRatingTask);
 

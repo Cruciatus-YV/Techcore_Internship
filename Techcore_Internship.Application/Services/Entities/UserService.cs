@@ -13,7 +13,7 @@ public class UserService : IUserService
         _userManager = userManager;
     }
 
-    public async Task<IdentityResult> RegisterAsync(UserRegisterRequest registerRequest)
+    public async Task<IdentityResult> RegisterAsync(UserAuthRequest registerRequest)
     {
         var newUser = new IdentityUser() { UserName = registerRequest.Email, Email = registerRequest.Email };
 
