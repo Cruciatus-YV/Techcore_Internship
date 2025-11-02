@@ -4,7 +4,7 @@ using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Application.Services.Entities;
+namespace Techcore_Internship.Application.Services.Context.Authors;
 
 public class AuthorService : IAuthorService
 {
@@ -21,7 +21,7 @@ public class AuthorService : IAuthorService
     {
         var cacheKey = $"authors_batch_{string.Join("_", requestedIds.OrderBy(id => id))}";
 
-        return await _cache.GetOrCreateAsync<List<AuthorResponse>?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var authors = await _authorRepository.GetByIdsAsync(requestedIds, cancellationToken);
@@ -34,7 +34,7 @@ public class AuthorService : IAuthorService
     {
         var cacheKey = $"author_{id}";
 
-        return await _cache.GetOrCreateAsync<AuthorResponse?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var author = await _authorRepository.GetByIdAsync(id, cancellationToken);
@@ -47,7 +47,7 @@ public class AuthorService : IAuthorService
     {
         var cacheKey = includeBooks ? "authors_all_with_books" : "authors_all";
 
-        return await _cache.GetOrCreateAsync<List<AuthorResponse>>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var authors = await _authorRepository.GetAllAsync(includeBooks, cancellationToken);

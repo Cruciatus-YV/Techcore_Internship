@@ -5,6 +5,6 @@ namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<SignInResult> LoginAsync(UserAuthRequest loginRequest);
+    Task<(bool Success, string Token, string? Error)> LoginAsync(UserAuthRequest loginRequest);
     Task<IdentityResult> RegisterAsync(UserAuthRequest registerRequest);
 }

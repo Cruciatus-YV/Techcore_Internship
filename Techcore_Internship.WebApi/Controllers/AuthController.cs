@@ -39,21 +39,13 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromForm] UserAuthRequest loginRequest)
     {
-        var result = await _userService.LoginAsync(loginRequest);
+        var (success, token, error) = await _userService.LoginAsync(loginRequest);
 
-        if (result.Succeeded)
+        if (success)
         {
-            return Ok(new
-            {
-                success = true,
-                message = "Login successful"
-            });
+            return Ok(new { token });
         }
 
-        return Unauthorized(new
-        {
-            success = false,
-            message = "Invalid email or password"
-        });
+        return Unauthorized(new { error });
     }
 }

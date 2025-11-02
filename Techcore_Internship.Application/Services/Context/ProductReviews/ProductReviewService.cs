@@ -4,7 +4,7 @@ using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Application.Services.Entities;
+namespace Techcore_Internship.Application.Services.Context.ProductReview;
 
 public class ProductReviewService : IProductReviewService
 {

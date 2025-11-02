@@ -1,14 +1,23 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using System.Reflection;
+using System.Text;
+using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Cache;
+using Techcore_Internship.Application.Services.Context.Authors;
+using Techcore_Internship.Application.Services.Context.Books;
+using Techcore_Internship.Application.Services.Context.ProductReview;
+using Techcore_Internship.Application.Services.Context.Users;
 using Techcore_Internship.Application.Services.Entities;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts;
+using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Data;
 using Techcore_Internship.Data.Repositories.Dapper;
 using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
@@ -38,6 +47,24 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+// JWT
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+        };
+    });
 
 // Caching
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -98,8 +125,9 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();

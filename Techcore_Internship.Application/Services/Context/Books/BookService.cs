@@ -12,7 +12,7 @@ using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Application.Services.Entities;
+namespace Techcore_Internship.Application.Services.Context.Books;
 
 public class BookService : IBookService
 {
@@ -53,7 +53,7 @@ public class BookService : IBookService
     {
         var cacheKey = $"book_{id}";
 
-        return await _cache.GetOrCreateAsync<BookResponse?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var bookEntity = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
@@ -66,7 +66,7 @@ public class BookService : IBookService
     {
         var cacheKey = $"books_author_{authorId}";
 
-        return await _cache.GetOrCreateAsync<List<BookResponse>?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var bookEntities = await _bookRepository.GetByAuthorIdAsync(authorId, cancellationToken);
@@ -79,7 +79,7 @@ public class BookService : IBookService
     {
         var cacheKey = $"book_dapper_{id}";
 
-        return await _cache.GetOrCreateAsync<BookResponse?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>  await _bookDapperRepository.GetByIdWithAuthorsAsync(id, cancellationToken),
             TimeSpan.FromMinutes(30));
     }
@@ -97,7 +97,7 @@ public class BookService : IBookService
     {
         var cacheKey = "books_all_ef";
 
-        return await _cache.GetOrCreateAsync<List<BookResponse>?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var bookEntities = await _bookRepository.GetAllWithAuthorsAsync(cancellationToken);
@@ -110,7 +110,7 @@ public class BookService : IBookService
     {
         var cacheKey = $"books_year_{year}";
 
-        return await _cache.GetOrCreateAsync<List<BookResponse>?>(cacheKey,
+        return await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var bookEntities = await _bookRepository.GetByYearAsync(year, cancellationToken);
