@@ -1,11 +1,12 @@
 ﻿using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
+using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
 
 namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IBookService
 {
-    Task<BookResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default);
     Task<List<BookResponse>?> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken = default);
     Task<List<BookResponse>?> GetAllWithAuthorsAsync(CancellationToken cancellationToken = default);
     Task<List<BookResponse>?> GetByYearAsync(int year, CancellationToken cancellationToken = default);
@@ -19,4 +20,7 @@ public interface IBookService
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> Exists(Guid id, CancellationToken cancellationToken = default);
     Task<List<BookResponse>?> GetAllWithAuthorsFromDapperAsync(CancellationToken cancellationToken = default);
+    Task<BookResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ProductDetailsResponse?> GetProductDetailsAsync(Guid id, CancellationToken cancellationToken);
+    Task<BookResponse?> GetByIdWithDapperAsync(Guid id, CancellationToken cancellationToken = default);
 }

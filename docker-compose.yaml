@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: Techcore_Internship_Postgres_Container
+    environment:
+      POSTGRES_DB: Techcore_Internship_Postgres
+      POSTGRES_USER: Cruciatus
+      POSTGRES_PASSWORD: 12345qwerty
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - Postgres_Data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: Techcore_Internship_Redis_Container
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - Redis_Data:/data
+    command: redis-server --appendonly yes
+
+  mongo:
+    image: mongo:7.0
+    container_name: Techcore_Internship_Mongo_Container
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: Cruciatus
+      MONGO_INITDB_ROOT_PASSWORD: 12345qwerty
+    volumes:
+      - Mongo_Data:/data/db
+      - Mongo_Config:/data/configdb
+
+volumes:
+  Postgres_Data:
+  Redis_Data:
+  Mongo_Data:
+  Mongo_Config:
+    
