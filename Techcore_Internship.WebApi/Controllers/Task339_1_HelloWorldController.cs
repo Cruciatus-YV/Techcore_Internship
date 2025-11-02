@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
-// Task339_1_HelloWorldApi
 [ApiController]
-public class HelloWorldController : ControllerBase
+public class Task339_1_HelloWorldController : ControllerBase
 {
+    /// <summary>
+    /// Вывести строку "Hello world"
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("hello")]
     public string Get()
     {

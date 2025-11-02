@@ -5,6 +5,9 @@ namespace Techcore_Internship.WebApi.Controllers;
 [ApiController]
 public class Task345_1_CookiesTokensController : ControllerBase
 {
+    /// <summary>
+    /// Описание различий между cookie-based и token-based аутентификацией в контексте stateless микросервисной архитектуры.
+    /// </summary>
     [HttpGet]
     [Route("cookies-vs-tokens")]
     public IActionResult GetCookiesVsTokens()

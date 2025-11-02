@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using System.Reflection;
@@ -19,24 +20,29 @@ using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Basic services
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
-// FluentValidation
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblies(
-    AppDomain.CurrentDomain.GetAssemblies()
-        .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
-);
+// Database configurations
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 
-// Redis
+builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("MongoDB");
+    return new MongoClient(connectionString);
+});
+
+// Identity
+//builder.Services.AddIdentity<IdentityUser, IdentityRole>();
+
+// Caching
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = builder.Configuration["RedisSettings:InstanceName"];
 });
-
-// Health Checks
-builder.Services.AddHealthChecks();
 
 builder.Services.AddOutputCache(options =>
     options.AddPolicy("BookPolicy", policy =>
@@ -44,11 +50,17 @@ builder.Services.AddOutputCache(options =>
         .Tag("books"))
 );
 
-// PostgreSQL
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
+// Validation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblies(
+    AppDomain.CurrentDomain.GetAssemblies()
+        .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
+);
 
-builder.Services.AddEndpointsApiExplorer();
+// Health Checks
+builder.Services.AddHealthChecks();
+
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -58,7 +70,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API для стажировки в Techcore"
     });
 
-    // Task339_9_SwaggerXmlComments
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
@@ -68,24 +79,11 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("MongoDB");
-    return new MongoClient(connectionString);
-});
-
-// MySettings
+// Settings configuration
 builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("RedisSettings"));
 
-// Service registration
-builder.Services.AddScoped<ITimeService, TimeService>();
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<IAuthorService, AuthorService>();
-builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
-builder.Services.AddHostedService<AverageRatingCalculatorService>();
-
-// Repository registration
+// Repositories registration
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
@@ -93,8 +91,18 @@ builder.Services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
 builder.Services.AddScoped<IBookDapperRepository, BookDapperRepository>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 
+// Services registration
+builder.Services.AddScoped<ITimeService, TimeService>();
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+
+// Background services
+builder.Services.AddHostedService<AverageRatingCalculatorService>();
+
 var app = builder.Build();
 
+// Middleware pipeline
 app.UseRequestLogging(); // Task339_4_Middleware
 app.UseGlobalExceptionHandler(); // Task339_5_ProblemDetails
 
@@ -108,7 +116,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.UseOutputCache();
 app.MapControllers();
-
 app.MapHealthChecks("/healthz");
 
 app.Run();
