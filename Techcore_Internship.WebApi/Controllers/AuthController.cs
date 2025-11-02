@@ -16,18 +16,44 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromForm] UserAuthRequest user)
+    public async Task<IActionResult> Register([FromForm] UserAuthRequest registerRequest)
     {
-        var result = await _userService.RegisterAsync(user);
+        var result = await _userService.RegisterAsync(registerRequest);
 
-        return Ok(result);
+        if (result.Succeeded)
+        {
+            return Ok(new
+            {
+                success = true,
+                message = "User registered successfully"
+            });
+        }
+
+        return BadRequest(new
+        {
+            success = false,
+            errors = result.Errors.Select(e => e.Description)
+        });
     }
 
-    //[HttpPost("login")]
-    //public async Task<IActionResult> Login([FromBody] UserRegisterRequest user)
-    //{
-    //    var result = await _userService.RegisterAsync(user);
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromForm] UserAuthRequest loginRequest)
+    {
+        var result = await _userService.LoginAsync(loginRequest);
 
-    //    return Ok(result);
-    //}
+        if (result.Succeeded)
+        {
+            return Ok(new
+            {
+                success = true,
+                message = "Login successful"
+            });
+        }
+
+        return Unauthorized(new
+        {
+            success = false,
+            message = "Invalid email or password"
+        });
+    }
 }
