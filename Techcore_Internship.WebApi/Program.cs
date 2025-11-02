@@ -35,7 +35,9 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 });
 
 // Identity
-//builder.Services.AddIdentity<IdentityUser, IdentityRole>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // Caching
 builder.Services.AddStackExchangeRedisCache(options =>
