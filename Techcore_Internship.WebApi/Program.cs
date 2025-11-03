@@ -154,23 +154,10 @@ builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
-
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = 401;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = 403;
-        return Task.CompletedTask;
-    };
-});
 
 var app = builder.Build();
 
@@ -195,4 +182,25 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 app.MapHealthChecks("/healthz");
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    await SeedRoles(roleManager);
+}
+
 app.Run();
+
+async Task SeedRoles(RoleManager<IdentityRole> roleManager)
+{
+    string[] roleNames = { "User", "Admin", "SuperAdmin" };
+
+    foreach (var roleName in roleNames)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+}

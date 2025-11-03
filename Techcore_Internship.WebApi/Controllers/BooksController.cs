@@ -15,7 +15,6 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -165,6 +164,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Созданная книга</returns>
     [HttpPost]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> Create([FromForm] CreateBookRequest request, CancellationToken cancellationToken = default)
     {
         var newBook = await _bookService.CreateAsync(request, cancellationToken);
@@ -178,6 +178,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Идентификатор созданной книги</returns>
     [HttpPost("with-authors")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> CreateWithAuthors([FromForm] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         var bookId = await _bookService.CreateWithAuthorsAsync(request, cancellationToken);
@@ -192,6 +193,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromForm] UpdateBookRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAsync(id, request, cancellationToken)
@@ -207,6 +209,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/authors")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> UpdateAuthors([FromRoute] Guid id, [FromForm] UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAuthorsAsync(id, request, cancellationToken)
@@ -222,6 +225,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/info")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> UpdateBookInfo([FromRoute] Guid id, [FromForm] UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateBookInfoAsync(id, request, cancellationToken)
@@ -237,6 +241,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/title")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromForm] string title, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateTitleAsync(id, title, cancellationToken)
@@ -252,6 +257,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/year")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> UpdateYear([FromRoute] Guid id, [FromForm] int year, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateYearAsync(id, year, cancellationToken)
@@ -266,6 +272,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном удалении, 404 Not Found если книга не найдена</returns>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin, SuperAdmin")]
     public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         return await _bookService.DeleteAsync(id, cancellationToken)
