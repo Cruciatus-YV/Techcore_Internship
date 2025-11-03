@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Techcore_Internship.Application.Authorization.Policies;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts;
@@ -16,6 +18,7 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -30,6 +33,26 @@ public class BooksController : ControllerBase
     {
         _mySettings = mySettings.Value;
         _bookService = bookService;
+    }
+
+    /// <summary>
+    /// Получить детальную информацию из Claims
+    /// </summary>
+    [HttpGet("detailed")]
+    public IActionResult GetDetailedUserInfo()
+    {
+        var detailedInfo = new
+        {
+            UserName = User.Identity?.Name,
+            UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+            Email = User.FindFirst(ClaimTypes.Email)?.Value,
+            DateOfBirth = User.FindFirst(ClaimTypes.DateOfBirth)?.Value,
+            Roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
+            JwtId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value,
+            AllClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+        };
+
+        return Ok(detailedInfo);
     }
 
     /// <summary>
