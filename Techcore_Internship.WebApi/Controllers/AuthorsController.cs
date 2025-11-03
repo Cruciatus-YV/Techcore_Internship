@@ -9,8 +9,8 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// Контроллер для управления авторами
 /// Предоставляет API для выполнения операций CRUD над авторами
 /// </summary>
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public class AuthorsController : ControllerBase
 {
     private readonly IAuthorService _authorService;

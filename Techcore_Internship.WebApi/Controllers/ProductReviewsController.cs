@@ -4,8 +4,8 @@ using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Requests;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
+[Route("api/[controller]")]
 [ApiController]
-[Route("[controller]")]
 public class ProductReviewsController : ControllerBase
 {
     private readonly IProductReviewService _productReviewService;

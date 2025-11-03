@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
@@ -12,8 +13,9 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// Контроллер для управления книгами
 /// Предоставляет API для выполнения операций CRUD над книгами
 /// </summary>
+[Route("api/[controller]")]
 [ApiController]
-[Route("[controller]")]
+[Authorize]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;

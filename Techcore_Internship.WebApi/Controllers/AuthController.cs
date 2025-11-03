@@ -4,8 +4,8 @@ using Techcore_Internship.Contracts.DTOs.Entities.User.Requests;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
+[Route("api/[controller]")]
 [ApiController]
-[Route("[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;

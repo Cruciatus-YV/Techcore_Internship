@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Reflection;
 using System.Text;
@@ -29,15 +30,15 @@ using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Basic services
+// Basic Services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Database configurations
+// Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 
-builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
+builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var connectionString = builder.Configuration.GetConnectionString("MongoDB");
     return new MongoClient(connectionString);
@@ -48,23 +49,28 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// JWT
+// JWT Authentication
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
-        };
-    });
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = false,
+        ValidateIssuerSigningKey = false,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+    };
+});
+
 
 // Caching
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -72,27 +78,22 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = builder.Configuration["RedisSettings:InstanceName"];
 });
-
 builder.Services.AddOutputCache(options =>
-    options.AddPolicy("BookPolicy", policy =>
-        policy.Expire(TimeSpan.FromSeconds(60))
-        .Tag("books"))
-);
+    options.AddPolicy("BookPolicy", policy => policy.Expire(TimeSpan.FromSeconds(60)).Tag("books")));
 
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
-    AppDomain.CurrentDomain.GetAssemblies()
-        .Where(assembly => assembly.FullName!.StartsWith("Techcore_Internship"))
+    AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName!.StartsWith("Techcore_Internship"))
 );
 
 // Health Checks
 builder.Services.AddHealthChecks();
 
-// Swagger
+// Swagger with JWT
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Techcore Internship API",
         Version = "v1",
@@ -101,18 +102,43 @@ builder.Services.AddSwaggerGen(c =>
 
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-
     if (File.Exists(xmlPath))
-    {
         c.IncludeXmlComments(xmlPath);
-    }
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "¬ведите токен в формате: Bearer {токен}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+             {
+         {
+             new OpenApiSecurityScheme
+             {
+                 Reference = new OpenApiReference
+                 {
+                     Type = ReferenceType.SecurityScheme,
+                     Id = "Bearer"
+                 },
+                 Scheme = "oauth2",
+                 Name = "Bearer",
+                 In = ParameterLocation.Header,
+             },
+             new List<string>()
+        }
+    });
 });
 
-// Settings configuration
+// App settings
 builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("RedisSettings"));
 
-// Repositories registration
+// Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
@@ -120,7 +146,7 @@ builder.Services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
 builder.Services.AddScoped<IBookDapperRepository, BookDapperRepository>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 
-// Services registration
+// Services
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
@@ -132,11 +158,33 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
+});
+
 var app = builder.Build();
 
 // Middleware pipeline
-app.UseRequestLogging(); // Task339_4_Middleware
-app.UseGlobalExceptionHandler(); // Task339_5_ProblemDetails
+app.UseRequestLogging();
+app.UseGlobalExceptionHandler();
+
+app.UseHttpsRedirection();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseOutputCache();
 
 if (app.Environment.IsDevelopment())
 {
@@ -144,9 +192,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.UseOutputCache();
 app.MapControllers();
 app.MapHealthChecks("/healthz");
 
