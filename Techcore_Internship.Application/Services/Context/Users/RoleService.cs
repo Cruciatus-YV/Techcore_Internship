@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Application.Services.Context.Users;
 
 public class RoleService : IRoleService
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUserEntity> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
 
-    public RoleService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
+    public RoleService(UserManager<ApplicationUserEntity> userManager, RoleManager<IdentityRole> roleManager)
     {
         _userManager = userManager;
         _roleManager = roleManager;

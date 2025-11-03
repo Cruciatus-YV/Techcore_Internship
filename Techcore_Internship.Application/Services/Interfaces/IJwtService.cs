@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Application.Services.Interfaces;
 
 public interface IJwtService
 {
-    Task<string> GenerateTokenAsync(IdentityUser user);
+    string GenerateTokenAsync(ApplicationUserEntity user, IList<string> roles);
 }

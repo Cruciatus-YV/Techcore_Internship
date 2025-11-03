@@ -5,7 +5,7 @@ using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.Data;
 
-public class ApplicationDbContext : IdentityDbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUserEntity>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

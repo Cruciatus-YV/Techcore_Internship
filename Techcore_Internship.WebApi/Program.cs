@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +9,9 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Reflection;
 using System.Text;
+using Techcore_Internship.Application.Authorization.Handlers;
+using Techcore_Internship.Application.Authorization.Policies;
+using Techcore_Internship.Application.Authorization.Reqirements;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Cache;
@@ -26,6 +30,7 @@ using Techcore_Internship.Data.Repositories.EF;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Data.Repositories.Mongo;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
+using Techcore_Internship.Domain.Entities;
 using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,7 +50,7 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 });
 
 // Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUserEntity, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -69,6 +74,15 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AgePolicies.OLDER_THEN_18, policy =>
+        policy.Requirements.Add(new MinimumAgeRequirement(18)));
+
+    options.AddPolicy(AgePolicies.OLDER_THEN_21, policy =>
+        policy.Requirements.Add(new MinimumAgeRequirement(21)));
 });
 
 
@@ -152,9 +166,12 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+
+builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();

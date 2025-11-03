@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
+using Techcore_Internship.Application.Authorization.Policies;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
@@ -77,6 +78,17 @@ public class BooksController : ControllerBase
         var book = await _bookService.GetByIdAsync(id, cancellationToken);
         
         return book == null ? NotFound() : Ok(book);
+    }
+
+    /// <summary>
+    /// Получить книгу с ограничением по возрасту (18+)
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("adult-content")]
+    [Authorize(Policy = AgePolicies.OLDER_THEN_18)]
+    public IActionResult GetAdultContent()
+    {
+        return Ok("Adult content");
     }
 
     /// <summary>
