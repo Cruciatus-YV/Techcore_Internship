@@ -9,8 +9,8 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// Контроллер для управления авторами
 /// Предоставляет API для выполнения операций CRUD над авторами
 /// </summary>
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public class AuthorsController : ControllerBase
 {
     private readonly IAuthorService _authorService;
@@ -57,7 +57,7 @@ public class AuthorsController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Созданный автор</returns>
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAuthorRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create([FromForm] CreateAuthorRequest request, CancellationToken cancellationToken = default)
     {
         var author = await _authorService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = author.Id }, author);
@@ -71,7 +71,7 @@ public class AuthorsController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если автор не найден</returns>
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult> Update([FromRoute] Guid id, [FromForm] UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _authorService.UpdateAsync(id, request, cancellationToken);
         return result ? Ok() : NotFound();

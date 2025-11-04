@@ -1,8 +1,6 @@
 ﻿using MongoDB.Driver;
-using System.Linq.Expressions;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 using Techcore_Internship.Domain.Entities;
-using static Dapper.SqlMapper;
 
 namespace Techcore_Internship.Data.Repositories.Mongo;
 
@@ -16,14 +14,24 @@ public class ProductReviewRepository : IProductReviewRepository
         _reviews = database.GetCollection<ProductReviewEntity>("reviews");
     }
 
-    public async Task<List<ProductReviewEntity>> GetListByPredicateAsync(Expression<Func<ProductReviewEntity, bool>> predicate, CancellationToken cancellationToken)
+    public async Task<ProductReviewEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await _reviews.Find(predicate).ToListAsync(cancellationToken);
+        return await _reviews.Find(review => review.Id == id).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<ProductReviewEntity?> GetByPredicateAsync(Expression<Func<ProductReviewEntity, bool>> predicate, CancellationToken cancellationToken)
+    public async Task<List<ProductReviewEntity>> GetByProductIdAsync(Guid productId, CancellationToken cancellationToken)
     {
-        return await _reviews.Find(predicate).FirstOrDefaultAsync(cancellationToken);
+        return await _reviews.Find(review => review.ProductId == productId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<ProductReviewEntity>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _reviews.Find(review => review.UserId == userId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<ProductReviewEntity>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _reviews.Find(_ => true).ToListAsync(cancellationToken);
     }
 
     public async Task<Guid> CreateAsync(ProductReviewEntity review, CancellationToken cancellationToken)

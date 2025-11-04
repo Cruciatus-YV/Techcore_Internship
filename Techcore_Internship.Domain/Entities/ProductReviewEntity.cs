@@ -1,9 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Techcore_Internship.Domain.Entities.Shared;
 
 namespace Techcore_Internship.Domain.Entities;
 
-public class ProductReviewEntity
+public class ProductReviewEntity : IHaveId<Guid>
 {
     [BsonId]
     [BsonRepresentation(BsonType.String)]

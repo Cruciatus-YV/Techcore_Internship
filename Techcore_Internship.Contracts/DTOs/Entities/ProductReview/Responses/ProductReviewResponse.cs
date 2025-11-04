@@ -6,10 +6,10 @@ public record ProductReviewResponse
 {
     public Guid Id { get; init; }
     public Guid UserId { get; init; }
-    public string UserName { get; init; } = string.Empty;
+    public string UserName { get; init; }
     public int Rating { get; init; }
-    public string Title { get; init; } = string.Empty;
-    public string Comment { get; init; } = string.Empty;
+    public string Title { get; init; }
+    public string Comment { get; init; }
     public DateTime CreatedAt { get; init; }
     public bool IsVerified { get; init; }
 

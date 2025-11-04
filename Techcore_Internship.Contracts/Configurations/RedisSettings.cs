@@ -2,6 +2,6 @@
 
 public class RedisSettings
 {
-    public string InstanceName { get; set; } = "Techcore_Internship_";
+    public string? InstanceName { get; set; }
     public int DefaultExpirationMinutes { get; set; } = 60;
 }
