@@ -221,3 +221,4 @@ async Task SeedRoles(RoleManager<IdentityRole> roleManager)
         }
     }
 }
+public partial class Program { }

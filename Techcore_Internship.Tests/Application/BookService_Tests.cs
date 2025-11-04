@@ -1,15 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
-using Moq;
+﻿using Moq;
 using Techcore_Internship.Application.Services.Context.Books;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
-using Techcore_Internship.Data;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Domain.Entities;
-using Xunit;
 
-namespace Techcore_Internship.Tests.Unit.Application;
+namespace Techcore_Internship.Tests.Application;
 
 public class BookService_Tests
 {
@@ -33,7 +29,7 @@ public class BookService_Tests
             .Setup(r => r.GetByIdWithAuthorsAsync(bookId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(bookEntity);
 
-        cacheServiceMock
+        cacheServiceMock    
             .Setup(c => c.GetOrCreateAsync(
                 It.IsAny<string>(),
                 It.IsAny<Func<Task<BookResponse?>>>(),
