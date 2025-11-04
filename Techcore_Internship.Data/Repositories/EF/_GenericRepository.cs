@@ -50,6 +50,13 @@ where TId : struct
         return await _dbContext.SaveChangesAsync(cancellationToken) > 0;
     }
 
+    public async Task<bool> DeleteEntityAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Remove(entity);
+
+        return await _dbContext.SaveChangesAsync(cancellationToken) > 0;
+    }
+
     public async Task<bool> IsEntityExists(TId id, CancellationToken cancellationToken = default)
     {
         var entity = await _asNoTracking.CountAsync(x => x.Id.Equals(id), cancellationToken);

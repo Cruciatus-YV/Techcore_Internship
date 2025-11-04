@@ -407,6 +407,30 @@ public class BookService : IBookService
         }
     }
 
+    public async Task<bool> DeleteForeverAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var requestedBook = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
+        if (requestedBook == null)
+            return false;
+
+        var authors = requestedBook.Authors.ToList();
+        var year = requestedBook.Year;
+
+        requestedBook.Authors.Clear();
+        await _bookRepository.UpdateEntityAsync(requestedBook, cancellationToken);
+
+        await _bookRepository.DeleteEntityAsync(requestedBook, cancellationToken);
+
+        await _cache.RemoveAsync($"book_{id}");
+        await _cache.RemoveAsync("books_all_ef");
+        await _cache.RemoveAsync("books_all_dapper");
+        foreach (var author in authors)
+            await _cache.RemoveAsync($"books_author_{author.Id}");
+        await _cache.RemoveAsync($"books_year_{year}");
+
+        return true;
+    }
+
     private async Task<List<AuthorEntity>> GetUpdatedAuthorsAsync(List<CreateAuthorRequest>? newAuthors,
                                                                   List<Guid>? existingAuthorIds,
                                                                   CancellationToken cancellationToken = default)
