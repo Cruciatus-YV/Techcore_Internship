@@ -1,6 +1,6 @@
 ﻿using Techcore_Internship.ConsoleApp.Module_1;
 
-namespace Techcore_Internship.Tests
+namespace Techcore_Internship.Tests.Unit.ConsoleApp
 {
     public class CalculatorTests
     {
