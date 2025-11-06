@@ -1,5 +1,10 @@
-﻿using System.Net;
+﻿using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.IntegrationTests;
 using Xunit;
 
@@ -39,6 +44,7 @@ public class InMemoryDbIntegrationTests
         // Arrange
         var webApplicationFactory = new MyTestFactory();
         var httpClient = webApplicationFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
 
         var badDto = new
         {
@@ -52,5 +58,47 @@ public class InMemoryDbIntegrationTests
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateBook_WithoutAuth_ShouldReturnUnauthorized()
+    {
+        // Arrange
+        var webApplicationFactory = new MyTestFactory();
+        var httpClient = webApplicationFactory.CreateClient();
+
+        var validDto = new CreateBookWithAuthorsRequest(
+            "Valid Book Title",
+            2023,
+            new List<CreateAuthorRequest> { new CreateAuthorRequest("Author First", "Author Last") }
+        );
+
+        // Act
+        var response = await httpClient.PostAsJsonAsync("/api/Books/with-authors", validDto);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateBook_WithAuth_ShouldReturnOk()
+    {
+        // Arrange
+        var webApplicationFactory = new MyTestFactory();
+        var httpClient = webApplicationFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
+
+        var validDto = new CreateBookWithAuthorsRequest(
+            "Valid Book Title",
+            2023,
+            new List<CreateAuthorRequest> { new CreateAuthorRequest("Author First", "Author Last") }
+        );
+
+        // Act
+        var response = await httpClient.PostAsJsonAsync("/api/Books/with-authors", validDto);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

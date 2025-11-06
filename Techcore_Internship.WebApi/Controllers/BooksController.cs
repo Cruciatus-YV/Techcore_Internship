@@ -210,7 +210,7 @@ public class BooksController : ControllerBase
     /// <returns>Созданная книга</returns>
     [HttpPost]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> Create([FromForm] CreateBookRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create([FromBody] CreateBookRequest request, CancellationToken cancellationToken = default)
     {
         var newBook = await _bookService.CreateAsync(request, cancellationToken);
         return Ok(newBook);
@@ -224,7 +224,7 @@ public class BooksController : ControllerBase
     /// <returns>Идентификатор созданной книги</returns>
     [HttpPost("with-authors")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> CreateWithAuthors([FromForm] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> CreateWithAuthors([FromBody] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         var bookId = await _bookService.CreateWithAuthorsAsync(request, cancellationToken);
         return Ok(bookId);
@@ -239,7 +239,7 @@ public class BooksController : ControllerBase
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromForm] UpdateBookRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateBookRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAsync(id, request, cancellationToken)
             ? Ok()
@@ -255,7 +255,7 @@ public class BooksController : ControllerBase
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/authors")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> UpdateAuthors([FromRoute] Guid id, [FromForm] UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateAuthors([FromRoute] Guid id, [FromBody] UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAuthorsAsync(id, request, cancellationToken)
             ? Ok()
@@ -271,7 +271,7 @@ public class BooksController : ControllerBase
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/info")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> UpdateBookInfo([FromRoute] Guid id, [FromForm] UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateBookInfo([FromRoute] Guid id, [FromBody] UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateBookInfoAsync(id, request, cancellationToken)
             ? Ok()
@@ -287,7 +287,7 @@ public class BooksController : ControllerBase
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/title")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromForm] string title, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromBody] string title, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateTitleAsync(id, title, cancellationToken)
             ? Ok()
@@ -303,7 +303,7 @@ public class BooksController : ControllerBase
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/year")]
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    public async Task<IActionResult> UpdateYear([FromRoute] Guid id, [FromForm] int year, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateYear([FromRoute] Guid id, [FromBody] int year, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateYearAsync(id, year, cancellationToken)
             ? Ok()

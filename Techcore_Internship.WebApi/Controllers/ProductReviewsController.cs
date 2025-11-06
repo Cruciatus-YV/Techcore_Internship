@@ -80,7 +80,7 @@ public class ProductReviewsController : ControllerBase
     /// <response code="200">Отзыв успешно создан</response>
     /// <response code="400">Некорректные данные отзыва</response>
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] CreateProductReviewRequest review, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CreateProductReviewRequest review, CancellationToken cancellationToken)
     {
         var productReviewId = await _productReviewService.CreateAsync(review, cancellationToken);
         return Ok(productReviewId);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Techcore_Internship.Data;
@@ -23,9 +24,7 @@ public class MyTestFactory : WebApplicationFactory<Program>
                 .ToList();
 
             foreach (var service in authServices)
-            {
                 services.Remove(service);
-            }
 
             services.AddAuthentication("Test")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
@@ -38,17 +37,15 @@ public class MyTestFactory : WebApplicationFactory<Program>
                 .ToList();
 
             foreach (var service in dbServices)
-            {
                 services.Remove(service);
-            }
 
-            // Добавляем In-Memory базу
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("TestDB");
+                options.UseInMemoryDatabase("TestDB")
+                       .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning));
             }, ServiceLifetime.Scoped);
         });
-
+        Console.WriteLine();
         var host = base.CreateHost(builder);
         InitializeDatabase(host);
         return host;
@@ -61,10 +58,10 @@ public class MyTestFactory : WebApplicationFactory<Program>
 
         db.Database.EnsureDeleted();
         db.Database.EnsureCreated();
-        InitializeDbForTests(db);
+        SeedTestData(db);
     }
 
-    private void InitializeDbForTests(ApplicationDbContext db)
+    private void SeedTestData(ApplicationDbContext db)
     {
         db.Books.RemoveRange(db.Books);
         db.Authors.RemoveRange(db.Authors);
