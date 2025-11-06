@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Net;
-using System.Net.Http.Headers;
+﻿using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.IntegrationTests;
