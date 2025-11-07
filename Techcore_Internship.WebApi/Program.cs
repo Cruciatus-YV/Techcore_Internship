@@ -164,6 +164,7 @@ builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IAuthorHttpService, AuthorHttpService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 
@@ -171,10 +172,16 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
+builder.Services.AddScoped<OpenApiInformationService>();
+
+
 builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
+
+// HttpClientFactory
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
