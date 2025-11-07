@@ -6,6 +6,9 @@ namespace Techcore_Internship.WebApi.Controllers;
 [Route("api/[controller]")]
 public class Task349_1_HttpClientVsHttpClientFactoryController : ControllerBase
 {
+    /// <summary>
+    /// Описание различий между HttpClient и HttpClientFactory, Socket Exhaustion
+    /// </summary>
     [HttpGet]
     public IActionResult Get()
     {
