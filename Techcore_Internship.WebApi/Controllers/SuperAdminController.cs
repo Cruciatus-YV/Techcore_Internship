@@ -18,7 +18,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost("assign")]
-    public async Task<IActionResult> AssignRole([FromForm] RoleRequest request)
+    public async Task<IActionResult> AssignRole([FromBody] RoleRequest request)
     {
         var result = await _roleService.AssignRoleToUserAsync(request.UserEmail, request.RoleName);
 
@@ -29,7 +29,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost("remove")]
-    public async Task<IActionResult> RemoveRole([FromForm] RoleRequest request)
+    public async Task<IActionResult> RemoveRole([FromBody] RoleRequest request)
     {
         var result = await _roleService.RemoveRoleFromUserAsync(request.UserEmail, request.RoleName);
 

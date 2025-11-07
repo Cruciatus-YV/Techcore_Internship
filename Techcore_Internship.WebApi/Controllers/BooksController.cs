@@ -18,7 +18,6 @@ namespace Techcore_Internship.WebApi.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -39,6 +38,7 @@ public class BooksController : ControllerBase
     /// Получить детальную информацию из Claims
     /// </summary>
     [HttpGet("detailed")]
+    [AllowAnonymous]
     public IActionResult GetDetailedUserInfo()
     {
         var detailedInfo = new
@@ -60,6 +60,7 @@ public class BooksController : ControllerBase
     /// </summary>
     /// <returns>Объект с настройками приложения</returns>
     [HttpGet("settings")]
+    [AllowAnonymous]
     public IActionResult Settings()
     {
         return Ok(_mySettings);
@@ -70,6 +71,7 @@ public class BooksController : ControllerBase
     /// </summary>
     /// <returns>Исключение NotImplementedException</returns>
     [HttpGet("error")]
+    [AllowAnonymous]
     public IActionResult Error()
     {
         throw new NotImplementedException();
@@ -83,6 +85,7 @@ public class BooksController : ControllerBase
     /// <returns>Книга с указанным идентификатором или 404 если не найдена</returns>
     [HttpGet("{id}/output-cache")]
     [OutputCache(PolicyName = "BookPolicy")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetOutputCacheTest([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookService.GetByIdOutputCacheTestAsync(id, cancellationToken);
@@ -96,10 +99,11 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Книга с указанным идентификатором или 404 если не найдена</returns>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookService.GetByIdAsync(id, cancellationToken);
-        
+
         return book == null ? NotFound() : Ok(book);
     }
 
@@ -121,6 +125,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Список книг указанного автора</returns>
     [HttpGet("by-author/{authorId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetByAuthorId([FromRoute] Guid authorId, CancellationToken cancellationToken = default)
     {
         var books = await _bookService.GetByAuthorIdAsync(authorId, cancellationToken);
@@ -133,6 +138,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Список всех книг с информацией об авторах</returns>
     [HttpGet("with-authors")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAllWithAuthors(CancellationToken cancellationToken = default)
     {
         var books = await _bookService.GetAllWithAuthorsAsync(cancellationToken);
@@ -146,6 +152,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet("dapper/{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetFromDapper([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookService.GetByIdWithDapperAsync(id, cancellationToken);
@@ -158,6 +165,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Список всех книг с информацией об авторах</returns>
     [HttpGet("with-authors-dapper")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAllWithAuthorsFromDapper(CancellationToken cancellationToken = default)
     {
         var books = await _bookService.GetAllWithAuthorsFromDapperAsync(cancellationToken);
@@ -171,6 +179,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Список книг указанного года издания</returns>
     [HttpGet("by-year/{year}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetByYear([FromRoute] int year, CancellationToken cancellationToken = default)
     {
         var books = await _bookService.GetByYearAsync(year, cancellationToken);
@@ -184,11 +193,12 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken">Токен отмены</param>
     /// <returns>Детали товара</returns>
     [HttpGet("details/{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetProductDetails([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var details = await _bookService.GetProductDetailsAsync(id, cancellationToken);
-        return details == null 
-            ? NotFound() 
+        return details == null
+            ? NotFound()
             : Ok(details);
     }
 
@@ -199,8 +209,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Созданная книга</returns>
     [HttpPost]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> Create([FromForm] CreateBookRequest request, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> Create([FromBody] CreateBookRequest request, CancellationToken cancellationToken = default)
     {
         var newBook = await _bookService.CreateAsync(request, cancellationToken);
         return Ok(newBook);
@@ -213,8 +223,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>Идентификатор созданной книги</returns>
     [HttpPost("with-authors")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> CreateWithAuthors([FromForm] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateWithAuthors([FromBody] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         var bookId = await _bookService.CreateWithAuthorsAsync(request, cancellationToken);
         return Ok(bookId);
@@ -228,8 +238,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromForm] UpdateBookRequest request, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateBookRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAsync(id, request, cancellationToken)
             ? Ok()
@@ -244,8 +254,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/authors")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> UpdateAuthors([FromRoute] Guid id, [FromForm] UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateAuthors([FromRoute] Guid id, [FromBody] UpdateBookAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateAuthorsAsync(id, request, cancellationToken)
             ? Ok()
@@ -260,8 +270,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPut("{id}/info")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> UpdateBookInfo([FromRoute] Guid id, [FromForm] UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateBookInfo([FromRoute] Guid id, [FromBody] UpdateBookInfoRequest request, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateBookInfoAsync(id, request, cancellationToken)
             ? Ok()
@@ -276,8 +286,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/title")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromForm] string title, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateTitle([FromRoute] Guid id, [FromBody] string title, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateTitleAsync(id, title, cancellationToken)
             ? Ok()
@@ -292,8 +302,8 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном обновлении, 404 Not Found если книга не найдена</returns>
     [HttpPatch("{id}/year")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
-    public async Task<IActionResult> UpdateYear([FromRoute] Guid id, [FromForm] int year, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateYear([FromRoute] Guid id, [FromBody] int year, CancellationToken cancellationToken = default)
     {
         return await _bookService.UpdateYearAsync(id, year, cancellationToken)
             ? Ok()
@@ -307,7 +317,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>200 OK при успешном удалении, 404 Not Found если книга не найдена</returns>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin, SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         return await _bookService.DeleteAsync(id, cancellationToken)
@@ -322,6 +332,7 @@ public class BooksController : ControllerBase
     /// <param name="cancellationToken = default">Токен отмены</param>
     /// <returns>True если книга существует, иначе False</returns>
     [HttpGet("{id}/exists")]
+    [AllowAnonymous]
     public async Task<IActionResult> Exists([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
         var exists = await _bookService.Exists(id, cancellationToken);
