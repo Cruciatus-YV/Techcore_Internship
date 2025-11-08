@@ -155,4 +155,19 @@ public class AuthorHttpService : IAuthorHttpService
             throw new Exception($"Error checking if author exists {id}");
         }
     }
+
+    public async Task<string> TestCircuitBreakerAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.GetAsync("/api/test/circuit-breaker-test", cancellationToken);
+
+        // Просто возвращаем ответ - Polly сам обработает статус код
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+
+        // Для не-success статусов возвращаем содержимое или бросаем исключение
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
+    }
 }

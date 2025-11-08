@@ -11,5 +11,6 @@ public interface IAuthorHttpService
     Task<AuthorResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<List<AuthorResponse>?> GetByIdsAsync(List<Guid> requestedIds, CancellationToken cancellationToken = default);
     Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<string> TestCircuitBreakerAsync(CancellationToken cancellationToken = default);
     Task<bool> UpdateAsync(Guid id, UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default);
 }

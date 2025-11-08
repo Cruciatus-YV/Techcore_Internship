@@ -106,13 +106,11 @@ builder.Services.AddHostedService<AverageRatingCalculatorService>();
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7004");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
 })
 .AddTransientHttpErrorPolicy(policy => policy
-    .WaitAndRetryAsync(
-        retryCount: 3,
-        sleepDurationProvider: _ => TimeSpan.FromSeconds(1)));
+    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)))
+.AddTransientHttpErrorPolicy(policy => policy
+    .WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(1)));
 
 var app = builder.Build();
 
