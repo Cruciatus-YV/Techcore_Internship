@@ -8,8 +8,8 @@ public class GenericRepository<TEntity, TId> : IGenericRepository<TEntity, TId>
 where TEntity : class, IHaveId<TId>
 where TId : struct
 {
-    private protected readonly ApplicationDbContext _dbContext;
-    private protected readonly DbSet<TEntity> _dbSet;
+    public readonly ApplicationDbContext _dbContext;
+    public readonly DbSet<TEntity> _dbSet;
 
     public GenericRepository(ApplicationDbContext dbContext)
     {

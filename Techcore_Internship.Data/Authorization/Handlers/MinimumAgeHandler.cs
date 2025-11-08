@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using Techcore_Internship.Application.Authorization.Reqirements;
-using Techcore_Internship.Domain.Entities;
+using Techcore_Internship.Data.Authorization.Reqirements;
 
-namespace Techcore_Internship.Application.Authorization.Handlers;
+namespace Techcore_Internship.Data.Authorization.Handlers;
 
 public class MinimumAgeHandler : AuthorizationHandler<MinimumAgeRequirement>
 {

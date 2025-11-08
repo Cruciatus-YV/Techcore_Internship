@@ -1,12 +1,14 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
-using Techcore_Internship.Contracts;
+using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
 using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
 using Techcore_Internship.Data;
+using Techcore_Internship.Data.Cache.Interfaces;
 using Techcore_Internship.Data.Repositories.Dapper.Interfaces;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
@@ -17,7 +19,7 @@ namespace Techcore_Internship.Application.Services.Context.Books;
 public class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
-    private readonly IAuthorRepository _authorRepository;
+    private readonly IAuthorHttpService _authorHttpService;
     private readonly IBookDapperRepository _bookDapperRepository;
     private readonly IRedisCacheService _cache;
     private readonly IDistributedCache _distributedCache;
@@ -27,7 +29,7 @@ public class BookService : IBookService
 
     public BookService(IBookRepository bookRepository,
                        ApplicationDbContext dbContext,
-                       IAuthorRepository authorRepository,
+                       IAuthorHttpService authorHttpService,
                        IBookDapperRepository bookDapperRepository,
                        IRedisCacheService cache,
                        IProductReviewRepository productReviewRepository,
@@ -36,17 +38,23 @@ public class BookService : IBookService
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
-        _authorRepository = authorRepository;
+        _authorHttpService = authorHttpService;
         _bookDapperRepository = bookDapperRepository;
         _cache = cache;
         _productReviewRepository = productReviewRepository;
         _redisSettings = redisSettings;
         _distributedCache = distributedCache;
     }
+
     public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var book = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
-        return book == null ? null : new BookResponse(book);
+        if (book == null) return null;
+
+        var authorIds = book.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
+        var authors = await _authorHttpService.GetByIdsAsync(authorIds, cancellationToken) ?? new List<AuthorResponse>();
+
+        return CreateBookResponse(book, authors);
     }
 
     public async Task<BookResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -57,7 +65,12 @@ public class BookService : IBookService
             async () =>
             {
                 var bookEntity = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
-                return bookEntity == null ? null : new BookResponse(bookEntity);
+                if (bookEntity == null) return null;
+
+                var authorIds = bookEntity.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
+                var authors = await _authorHttpService.GetByIdsAsync(authorIds, cancellationToken) ?? new List<AuthorResponse>();
+
+                return CreateBookResponse(bookEntity, authors);
             },
             TimeSpan.FromMinutes(30));
     }
@@ -70,7 +83,16 @@ public class BookService : IBookService
             async () =>
             {
                 var bookEntities = await _bookRepository.GetByAuthorIdAsync(authorId, cancellationToken);
-                return bookEntities?.Select(b => new BookResponse(b)).ToList();
+                if (bookEntities == null) return null;
+
+                var result = new List<BookResponse>();
+                foreach (var book in bookEntities)
+                {
+                    var authorIds = book.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
+                    var authors = await _authorHttpService.GetByIdsAsync(authorIds, cancellationToken) ?? new List<AuthorResponse>();
+                    result.Add(CreateBookResponse(book, authors));
+                }
+                return result;
             },
             TimeSpan.FromMinutes(15));
     }
@@ -80,7 +102,7 @@ public class BookService : IBookService
         var cacheKey = $"book_dapper_{id}";
 
         return await _cache.GetOrCreateAsync(cacheKey,
-            async () =>  await _bookDapperRepository.GetByIdWithAuthorsAsync(id, cancellationToken),
+            async () => await _bookDapperRepository.GetByIdWithAuthorsAsync(id, cancellationToken),
             TimeSpan.FromMinutes(30));
     }
 
@@ -101,7 +123,16 @@ public class BookService : IBookService
             async () =>
             {
                 var bookEntities = await _bookRepository.GetAllWithAuthorsAsync(cancellationToken);
-                return bookEntities?.Select(b => new BookResponse(b)).ToList();
+                if (bookEntities == null) return null;
+
+                var result = new List<BookResponse>();
+                foreach (var book in bookEntities)
+                {
+                    var authorIds = book.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
+                    var authors = await _authorHttpService.GetByIdsAsync(authorIds, cancellationToken) ?? new List<AuthorResponse>();
+                    result.Add(CreateBookResponse(book, authors));
+                }
+                return result;
             },
             TimeSpan.FromMinutes(10));
     }
@@ -114,7 +145,16 @@ public class BookService : IBookService
             async () =>
             {
                 var bookEntities = await _bookRepository.GetByYearAsync(year, cancellationToken);
-                return bookEntities?.Select(b => new BookResponse(b)).ToList();
+                if (bookEntities == null) return null;
+
+                var result = new List<BookResponse>();
+                foreach (var book in bookEntities)
+                {
+                    var authorIds = book.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
+                    var authors = await _authorHttpService.GetByIdsAsync(authorIds, cancellationToken) ?? new List<AuthorResponse>();
+                    result.Add(CreateBookResponse(book, authors));
+                }
+                return result;
             },
             TimeSpan.FromMinutes(20));
     }
@@ -130,10 +170,18 @@ public class BookService : IBookService
 
         try
         {
-            var foundedAuthors = await _authorRepository.GetByIdsAsync(request.AuthorIds, cancellationToken);
-
-            if (foundedAuthors.Count != request.AuthorIds.Count)
+            // Валидируем авторов через IAuthorHttpService
+            var authors = await _authorHttpService.GetByIdsAsync(request.AuthorIds, cancellationToken);
+            if (authors?.Count != request.AuthorIds.Count)
                 throw new ArgumentException("Некорректный список AuthorIds");
+
+            var authorEntities = authors.Select(a => new AuthorEntity
+            {
+                Id = a.Id,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                IsDeleted = false
+            }).ToList();
 
             var newBook = new BookEntity()
             {
@@ -141,19 +189,15 @@ public class BookService : IBookService
                 Title = request.Title,
                 Year = request.Year,
                 IsDeleted = false,
-                Authors = foundedAuthors
+                Authors = authorEntities
             };
 
             await _bookRepository.InsertEntityAsync(newBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            await _cache.RemoveAsync("books_all_ef");
-            await _cache.RemoveAsync("books_all_dapper");
-            foreach (var author in newBook.Authors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-            await _cache.RemoveAsync($"books_year_{newBook.Year}");
+            await ClearBookCaches(newBook, request.AuthorIds);
 
-            return new BookResponse(newBook);
+            return CreateBookResponse(newBook, authors);
         }
         catch (Exception)
         {
@@ -168,27 +212,40 @@ public class BookService : IBookService
 
         try
         {
-            var newAuthors = request.NewAuthors.Select(newAuthorDto => new AuthorEntity
-            {
-                Id = Guid.NewGuid(),
-                FirstName = newAuthorDto.FirstName,
-                LastName = newAuthorDto.LastName,
-                IsDeleted = false
-            }).ToList();
+            var allAuthorIds = new List<Guid>();
 
-            await _authorRepository.InsertListEntityAsync(newAuthors, cancellationToken);
-
-            var existingAuthors = new List<AuthorEntity>();
-            if (request.ExistingAuthorIds?.Any() == true)
+            // Создаем новых авторов через IAuthorHttpService
+            if (request.NewAuthors?.Any() == true)
             {
-                existingAuthors = await _authorRepository.GetByIdsAsync(request.ExistingAuthorIds, cancellationToken);
-                if (existingAuthors.Count != request.ExistingAuthorIds.Count)
-                    throw new ArgumentException("Некорректный список ExistingAuthorsIds");
+                foreach (var newAuthorDto in request.NewAuthors)
+                {
+                    var createdAuthor = await _authorHttpService.CreateAsync(newAuthorDto, cancellationToken);
+                    allAuthorIds.Add(createdAuthor.Id);
+                }
             }
 
-            var allAuthors = newAuthors.Concat(existingAuthors).ToList();
-            if (!allAuthors.Any())
+            // Добавляем существующих авторов
+            if (request.ExistingAuthorIds?.Any() == true)
+            {
+                var existingAuthors = await _authorHttpService.GetByIdsAsync(request.ExistingAuthorIds, cancellationToken);
+                if (existingAuthors?.Count != request.ExistingAuthorIds.Count)
+                    throw new ArgumentException("Некорректный список ExistingAuthorsIds");
+
+                allAuthorIds.AddRange(request.ExistingAuthorIds);
+            }
+
+            if (!allAuthorIds.Any())
                 throw new ArgumentException("Книга должна иметь хотя бы одного автора");
+
+            // Получаем полные данные авторов
+            var allAuthors = await _authorHttpService.GetByIdsAsync(allAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
+            var authorEntities = allAuthors.Select(a => new AuthorEntity
+            {
+                Id = a.Id,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                IsDeleted = false
+            }).ToList();
 
             var newBook = new BookEntity()
             {
@@ -196,17 +253,13 @@ public class BookService : IBookService
                 Title = request.Title,
                 Year = request.Year,
                 IsDeleted = false,
-                Authors = allAuthors
+                Authors = authorEntities
             };
 
             await _bookRepository.InsertEntityAsync(newBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            await _cache.RemoveAsync("books_all_ef");
-            await _cache.RemoveAsync("books_all_dapper");
-            foreach (var author in newBook.Authors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-            await _cache.RemoveAsync($"books_year_{newBook.Year}");
+            await ClearBookCaches(newBook, allAuthorIds);
 
             return newBook.Id;
         }
@@ -227,7 +280,7 @@ public class BookService : IBookService
             if (existingBook == null || existingBook.IsDeleted)
                 return false;
 
-            var oldAuthors = existingBook.Authors.ToList();
+            var oldAuthorIds = existingBook.Authors.Select(a => a.Id).ToList();
             var oldYear = existingBook.Year;
 
             existingBook.Title = request.Title;
@@ -235,24 +288,22 @@ public class BookService : IBookService
 
             if (request.NewAuthors?.Any() == true || request.ExistingAuthorIds?.Any() == true)
             {
-                var updatedAuthors = await GetUpdatedAuthorsAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
-                existingBook.Authors = updatedAuthors;
+                var updatedAuthorIds = await ProcessAuthorsViaHttpAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
+                var updatedAuthors = await _authorHttpService.GetByIdsAsync(updatedAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
+
+                existingBook.Authors = updatedAuthors.Select(a => new AuthorEntity
+                {
+                    Id = a.Id,
+                    FirstName = a.FirstName,
+                    LastName = a.LastName,
+                    IsDeleted = false
+                }).ToList();
             }
 
             await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            await _cache.RemoveAsync($"book_{bookId}");
-            await _cache.RemoveAsync("books_all_ef");
-            await _cache.RemoveAsync("books_all_dapper");
-
-            foreach (var author in oldAuthors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-            foreach (var author in existingBook.Authors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-
-            await _cache.RemoveAsync($"books_year_{oldYear}");
-            await _cache.RemoveAsync($"books_year_{existingBook.Year}");
+            await ClearBookCaches(existingBook, oldAuthorIds);
 
             return true;
         }
@@ -273,27 +324,26 @@ public class BookService : IBookService
             if (existingBook == null || existingBook.IsDeleted)
                 throw new ArgumentException("Книга не найдена");
 
-            var oldAuthors = existingBook.Authors.ToList();
+            var oldAuthorIds = existingBook.Authors.Select(a => a.Id).ToList();
 
             if (request.NewAuthors == null && request.ExistingAuthorIds == null)
                 throw new ArgumentException("Книга не может быть без авторов");
 
-            var updatedAuthors = await GetUpdatedAuthorsAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
-            existingBook.Authors = updatedAuthors;
+            var updatedAuthorIds = await ProcessAuthorsViaHttpAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
+            var updatedAuthors = await _authorHttpService.GetByIdsAsync(updatedAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
+
+            existingBook.Authors = updatedAuthors.Select(a => new AuthorEntity
+            {
+                Id = a.Id,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                IsDeleted = false
+            }).ToList();
 
             await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            await _cache.RemoveAsync($"book_{id}");
-            await _cache.RemoveAsync("books_all_ef");
-            await _cache.RemoveAsync("books_all_dapper");
-
-            foreach (var author in oldAuthors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-            foreach (var author in existingBook.Authors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-
-            await _cache.RemoveAsync($"books_year_{existingBook.Year}");
+            await ClearBookCaches(existingBook, oldAuthorIds);
 
             return true;
         }
@@ -384,19 +434,14 @@ public class BookService : IBookService
             if (existingBook.IsDeleted)
                 return true;
 
-            var authors = existingBook.Authors.ToList();
+            var authorIds = existingBook.Authors?.Select(a => a.Id).ToList() ?? new List<Guid>();
             var year = existingBook.Year;
 
             existingBook.IsDeleted = true;
             await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            await _cache.RemoveAsync($"book_{id}");
-            await _cache.RemoveAsync("books_all_ef");
-            await _cache.RemoveAsync("books_all_dapper");
-            foreach (var author in authors)
-                await _cache.RemoveAsync($"books_author_{author.Id}");
-            await _cache.RemoveAsync($"books_year_{year}");
+            await ClearBookCaches(existingBook, authorIds);
 
             return true;
         }
@@ -413,7 +458,7 @@ public class BookService : IBookService
         if (requestedBook == null)
             return false;
 
-        var authors = requestedBook.Authors.ToList();
+        var authorIds = requestedBook.Authors.Select(a => a.Id).ToList();
         var year = requestedBook.Year;
 
         requestedBook.Authors.Clear();
@@ -421,45 +466,9 @@ public class BookService : IBookService
 
         await _bookRepository.DeleteEntityAsync(requestedBook, cancellationToken);
 
-        await _cache.RemoveAsync($"book_{id}");
-        await _cache.RemoveAsync("books_all_ef");
-        await _cache.RemoveAsync("books_all_dapper");
-        foreach (var author in authors)
-            await _cache.RemoveAsync($"books_author_{author.Id}");
-        await _cache.RemoveAsync($"books_year_{year}");
+        await ClearBookCaches(requestedBook, authorIds);
 
         return true;
-    }
-
-    private async Task<List<AuthorEntity>> GetUpdatedAuthorsAsync(List<CreateAuthorRequest>? newAuthors,
-                                                                  List<Guid>? existingAuthorIds,
-                                                                  CancellationToken cancellationToken = default)
-    {
-        var authors = new List<AuthorEntity>();
-
-        if (newAuthors?.Any() == true)
-        {
-            var newAuthorEntities = newAuthors.Select(newAuthorDto => new AuthorEntity
-            {
-                Id = Guid.NewGuid(),
-                FirstName = newAuthorDto.FirstName,
-                LastName = newAuthorDto.LastName,
-                IsDeleted = false
-            }).ToList();
-
-            await _authorRepository.InsertListEntityAsync(newAuthorEntities, cancellationToken);
-            authors.AddRange(newAuthorEntities);
-        }
-
-        if (existingAuthorIds?.Any() == true)
-        {
-            var existingAuthors = await _authorRepository.GetByIdsAsync(existingAuthorIds, cancellationToken);
-            if (existingAuthors.Count != existingAuthorIds.Count)
-                throw new ArgumentException("Некорректный список ExistingAuthorIds");
-            authors.AddRange(existingAuthors);
-        }
-
-        return authors;
     }
 
     public async Task<ProductDetailsResponse?> GetProductDetailsAsync(Guid id, CancellationToken cancellationToken)
@@ -474,8 +483,53 @@ public class BookService : IBookService
         var reviews = reviewsTask.Result;
         var avgBookRating = avgBookRatingTask.Result;
 
-        return book == null 
-            ? null 
+        return book == null
+            ? null
             : new ProductDetailsResponse(book, reviews?.Select(r => new ProductReviewResponse(r))?.ToList() ?? [], avgBookRating ?? "No rating yet");
+    }
+
+    private async Task<List<Guid>> ProcessAuthorsViaHttpAsync(List<CreateAuthorRequest>? newAuthors, List<Guid>? existingAuthorIds, CancellationToken cancellationToken)
+    {
+        var authorIds = new List<Guid>();
+
+        if (newAuthors?.Any() == true)
+        {
+            foreach (var newAuthorDto in newAuthors)
+            {
+                var createdAuthor = await _authorHttpService.CreateAsync(newAuthorDto, cancellationToken);
+                authorIds.Add(createdAuthor.Id);
+            }
+        }
+
+        if (existingAuthorIds?.Any() == true)
+        {
+            var existingAuthors = await _authorHttpService.GetByIdsAsync(existingAuthorIds, cancellationToken);
+            if (existingAuthors?.Count != existingAuthorIds.Count)
+                throw new ArgumentException("Некорректный список ExistingAuthorIds");
+
+            authorIds.AddRange(existingAuthorIds);
+        }
+
+        return authorIds;
+    }
+
+    private BookResponse CreateBookResponse(BookEntity book, List<AuthorResponse> authors)
+    {
+        return new BookResponse(
+            book.Id,
+            book.Title,
+            book.Year,
+            authors.Select(a => new AuthorReferenceResponse(a.Id, a.FirstName, a.LastName)).ToList()
+        );
+    }
+
+    private async Task ClearBookCaches(BookEntity book, List<Guid> authorIds)
+    {
+        await _cache.RemoveAsync($"book_{book.Id}");
+        await _cache.RemoveAsync("books_all_ef");
+        await _cache.RemoveAsync("books_all_dapper");
+        foreach (var authorId in authorIds)
+            await _cache.RemoveAsync($"books_author_{authorId}");
+        await _cache.RemoveAsync($"books_year_{book.Year}");
     }
 }

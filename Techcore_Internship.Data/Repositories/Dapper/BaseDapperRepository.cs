@@ -10,9 +10,4 @@ public class BaseDapperRepository : IBaseDapperRepository
     {
         _connectionString = configuration.GetSection("ConnectionStrings").GetChildren().First(x => x.Key.StartsWith("Techcore_Internship_Postgres_Connection")).Value!;
     }
-
-    //public async Task GetAll()
-    //{
-    //    var cons = _connectionString;
-    //}
 }

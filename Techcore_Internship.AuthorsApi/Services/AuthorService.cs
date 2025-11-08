@@ -1,27 +1,64 @@
-﻿using Techcore_Internship.AuthorsApi.Contracts.DTOs.Requests;
-using Techcore_Internship.AuthorsApi.Contracts.DTOs.Responses;
-using Techcore_Internship.AuthorsApi.Data.Interfaces;
-using Techcore_Internship.AuthorsApi.Domain;
+﻿using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Services.Interfaces;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
+using Techcore_Internship.Data.Cache.Interfaces;
+using Techcore_Internship.Domain.Entities;
 
 namespace Techcore_Internship.AuthorsApi.Services;
 
 public class AuthorService : IAuthorService
 {
     private readonly IAuthorRepository _authorRepository;
-    private readonly ILogger<AuthorService> _logger;
+    private readonly IRedisCacheService _cache;
 
-    public AuthorService(IAuthorRepository authorRepository, ILogger<AuthorService> logger)
+    public AuthorService(IAuthorRepository authorRepository, IRedisCacheService cache)
     {
         _authorRepository = authorRepository;
-        _logger = logger;
+        _cache = cache;
     }
 
-    public async Task<AuthorReferenceResponse> CreateAsync(CreateAuthorRequest request)
+    public async Task<List<AuthorResponse>?> GetByIdsAsync(List<Guid> requestedIds, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Creating new author: {FirstName} {LastName}",
-            request.FirstName, request.LastName);
+        var cacheKey = $"authors_batch_{string.Join("_", requestedIds.OrderBy(id => id))}";
 
+        return await _cache.GetOrCreateAsync(cacheKey,
+            async () =>
+            {
+                var authors = await _authorRepository.GetByIdsAsync(requestedIds, cancellationToken);
+                return authors?.Select(a => new AuthorResponse(a)).ToList();
+            },
+            TimeSpan.FromMinutes(15));
+    }
+
+    public async Task<AuthorResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = $"author_{id}";
+
+        return await _cache.GetOrCreateAsync(cacheKey,
+            async () =>
+            {
+                var author = await _authorRepository.GetByIdAsync(id, cancellationToken);
+                return author == null ? null : new AuthorResponse(author);
+            },
+            TimeSpan.FromMinutes(30));
+    }
+
+    public async Task<List<AuthorResponse>> GetAllAsync(CancellationToken cancellationToken = default, bool includeBooks = false)
+    {
+        var cacheKey = includeBooks ? "authors_all_with_books" : "authors_all";
+
+        return await _cache.GetOrCreateAsync(cacheKey,
+            async () =>
+            {
+                var authors = await _authorRepository.GetAllAsync(includeBooks, cancellationToken);
+                return authors.Select(a => new AuthorResponse(a)).ToList();
+            },
+            TimeSpan.FromMinutes(10));
+    }
+
+    public async Task<AuthorResponse> CreateAsync(CreateAuthorRequest request, CancellationToken cancellationToken = default)
+    {
         var author = new AuthorEntity
         {
             Id = Guid.NewGuid(),
@@ -30,84 +67,57 @@ public class AuthorService : IAuthorService
             IsDeleted = false
         };
 
-        var createdId = await _authorRepository.CreateAsync(author);
+        await _authorRepository.InsertEntityAsync(author, cancellationToken);
 
-        _logger.LogInformation("Author created with ID: {AuthorId}", createdId);
+        await _cache.RemoveAsync("authors_all");
+        await _cache.RemoveAsync("authors_all_with_books");
 
-        return new AuthorReferenceResponse(author);
+        return new AuthorResponse(author);
     }
 
-    public async Task<AuthorReferenceResponse> GetByIdAsync(Guid id)
+    public async Task<bool> UpdateAsync(Guid id, UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Getting author by ID: {AuthorId}", id);
-
-        var author = await _authorRepository.GetByIdAsync(id);
-        if (author == null)
-        {
-            _logger.LogWarning("Author with ID {AuthorId} not found", id);
-            throw new AuthorNotFoundException(id);
-        }
-
-        return new AuthorReferenceResponse(author);
-    }
-
-    public async Task<List<AuthorReferenceResponse>> GetAllAsync()
-    {
-        _logger.LogInformation("Getting all authors");
-
-        var authors = await _authorRepository.GetAllAsync();
-        return authors.Select(author => new AuthorReferenceResponse(author)).ToList();
-    }
-
-
-    public async Task<AuthorReferenceResponse> UpdateAsync(Guid id, UpdateAuthorInfoRequest request)
-    {
-        _logger.LogInformation("Updating author with ID: {AuthorId}", id);
-
-        var existingAuthor = await _authorRepository.GetByIdAsync(id);
-        if (existingAuthor == null)
-        {
-            _logger.LogWarning("Author with ID {AuthorId} not found for update", id);
-            throw new AuthorNotFoundException(id);
-        }
-
-        var updatedAuthor = new AuthorEntity
-        {
-            Id = existingAuthor.Id,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            IsDeleted = existingAuthor.IsDeleted
-        };
-
-        var success = await _authorRepository.UpdateAsync(updatedAuthor);
-        if (!success)
-        {
-            _logger.LogError("Failed to update author with ID: {AuthorId}", id);
-            throw new Exception($"Failed to update author with ID {id}");
-        }
-
-        _logger.LogInformation("Author with ID {AuthorId} updated successfully", id);
-
-        return new AuthorReferenceResponse(updatedAuthor);
-    }
-
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        _logger.LogInformation("Deleting author with ID: {AuthorId}", id);
-
-        var success = await _authorRepository.DeleteAsync(id);
-        if (!success)
-        {
-            _logger.LogWarning("Author with ID {AuthorId} not found for deletion", id);
+        var existingAuthor = await _authorRepository.GetEntityByIdAsync(id, cancellationToken);
+        if (existingAuthor == null || existingAuthor.IsDeleted)
             return false;
+
+        existingAuthor.FirstName = request.FirstName;
+        existingAuthor.LastName = request.LastName;
+
+        var result = await _authorRepository.UpdateEntityAsync(existingAuthor, cancellationToken);
+
+        if (result)
+        {
+            await _cache.RemoveAsync($"author_{id}");
+            await _cache.RemoveAsync("authors_all");
+            await _cache.RemoveAsync("authors_all_with_books");
         }
 
-        _logger.LogInformation("Author with ID {AuthorId} deleted successfully", id);
-        return true;
+        return result;
     }
-}
-public class AuthorNotFoundException : Exception
-{
-    public AuthorNotFoundException(Guid authorId)
-        : base($"Author with ID {authorId} not found") { }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var author = await _authorRepository.GetEntityByIdAsync(id, cancellationToken);
+        if (author == null || author.IsDeleted)
+            return false;
+
+        author.IsDeleted = true;
+        var result = await _authorRepository.UpdateEntityAsync(author, cancellationToken);
+
+        if (result)
+        {
+            await _cache.RemoveAsync($"author_{id}");
+            await _cache.RemoveAsync("authors_all");
+            await _cache.RemoveAsync("authors_all_with_books");
+        }
+
+        return result;
+    }
+
+    public async Task<bool> IsExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var author = await GetByIdAsync(id, cancellationToken);
+        return author != null;
+    }
 }

@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.Application.Authorization.Policies;
+﻿namespace Techcore_Internship.Data.Authorization.Policies;
 
 public static class AgePolicies
 {

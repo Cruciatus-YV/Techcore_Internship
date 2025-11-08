@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
-using Techcore_Internship.Application.Services.Interfaces;
-using Techcore_Internship.Contracts;
+using Techcore_Internship.Data.Cache.Interfaces;
+using Techcore_Internship.Contracts.Configurations;
 
-namespace Techcore_Internship.Application.Services.Cache;
+namespace Techcore_Internship.Data.Cache;
 
 public class RedisCacheService : IRedisCacheService
 {
@@ -20,10 +20,10 @@ public class RedisCacheService : IRedisCacheService
     public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
     {
         var fullKey = $"{_redisSettings.InstanceName}{key}";
-        var cached = await _cache.GetStringAsync(fullKey);
+        //var cached = await _cache.GetStringAsync(fullKey);
 
-        if (!string.IsNullOrEmpty(cached))
-            return JsonSerializer.Deserialize<T>(cached)!;
+        //if (!string.IsNullOrEmpty(cached))
+        //    return JsonSerializer.Deserialize<T>(cached)!;
 
         var result = await factory();
         var serialized = JsonSerializer.Serialize(result);

@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Techcore_Internship.Application.Authorization.Policies;
+using Techcore_Internship.Data.Authorization.Policies;
 using Techcore_Internship.Application.Services.Interfaces;
-using Techcore_Internship.Contracts;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
+using Techcore_Internship.Contracts.Configurations;
 
 namespace Techcore_Internship.WebApi.Controllers;
 

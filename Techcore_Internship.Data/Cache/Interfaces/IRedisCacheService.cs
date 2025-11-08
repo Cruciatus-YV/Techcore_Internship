@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.Application.Services.Interfaces;
+﻿namespace Techcore_Internship.Data.Cache.Interfaces;
 
 public interface IRedisCacheService
 {

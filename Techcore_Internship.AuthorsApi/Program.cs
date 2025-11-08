@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
-using Techcore_Internship.AuthorsApi.Data;
 using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Data.Repositories;
 using Techcore_Internship.AuthorsApi.Services;
 using Techcore_Internship.AuthorsApi.Services.Interfaces;
+using Techcore_Internship.Data;
+using Techcore_Internship.Data.Cache;
+using Techcore_Internship.Data.Cache.Interfaces;
+using Techcore_Internship.Data.Utils.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,30 +14,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // Database
-builder.Services.AddDbContext<AuthorsDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 
-// Swagger
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Techcore Internship API",
-        Version = "v1",
-        Description = "API для стажировки в Techcore"
-    });
+// Redis
+builder.Services.AddCustomRedis(builder);
 
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-        c.IncludeXmlComments(xmlPath);
-});
+// Swagger
+builder.Services.AddCustomSwaggerWithJwt();
+
+// Authentication
+builder.Services.AddCustomAuthentication(builder);
+
+// Authorization
+builder.Services.AddCustomAuthorization();
 
 // Repositories
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 
 // Services
 builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
 var app = builder.Build();
 

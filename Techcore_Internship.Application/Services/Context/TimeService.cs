@@ -1,6 +1,6 @@
 ﻿using Techcore_Internship.Application.Services.Interfaces;
 
-namespace Techcore_Internship.Application.Services.Entities;
+namespace Techcore_Internship.Application.Services.Context;
 
 public class TimeService : ITimeService
 {

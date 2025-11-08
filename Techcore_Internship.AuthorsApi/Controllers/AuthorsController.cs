@@ -1,78 +1,107 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Techcore_Internship.AuthorsApi.Contracts.DTOs.Requests;
-using Techcore_Internship.AuthorsApi.Contracts.DTOs.Responses;
 using Techcore_Internship.AuthorsApi.Services.Interfaces;
 
 namespace Techcore_Internship.AuthorsApi.Controllers;
 
-[ApiController]
+using Microsoft.AspNetCore.Mvc;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
+using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
+
+/// <summary>
+/// Контроллер для управления авторами
+/// Предоставляет API для выполнения операций CRUD над авторами
+/// </summary>
 [Route("api/[controller]")]
+[ApiController]
 public class AuthorsController : ControllerBase
 {
     private readonly IAuthorService _authorService;
 
+    /// <summary>
+    /// Конструктор контроллера авторов
+    /// </summary>
+    /// <param name="authorService">Сервис для работы с авторами</param>
     public AuthorsController(IAuthorService authorService)
     {
         _authorService = authorService;
     }
 
     /// <summary>
-    /// Создание нового автора
+    /// Получить автора по идентификатору
     /// </summary>
-    /// <param name="request">Данные для создания автора</param>
-    /// <returns>Созданный автор</returns>
-    [HttpPost]
-    public async Task<ActionResult<AuthorReferenceResponse>> Create([FromBody] CreateAuthorRequest request)
+    /// <param name="id">GUID идентификатор автора</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>Автор с указанным идентификатором или 404 если не найден</returns>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AuthorResponse>> GetById([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
-        var author = await _authorService.CreateAsync(request);
-        return CreatedAtAction(nameof(GetById), new { id = author.Id }, author);
+        var author = await _authorService.GetByIdAsync(id, cancellationToken);
+        return author == null ? NotFound() : Ok(author);
     }
 
     /// <summary>
-    /// Получение списка всех авторов
+    /// Получить всех авторов
     /// </summary>
-    /// <returns>Список авторов</returns>
+    /// <param name="includeBooks">Включать ли информацию о книгах в ответ</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>Список всех авторов</returns>
     [HttpGet]
-    public async Task<ActionResult<List<AuthorReferenceResponse>>> GetAll()
+    public async Task<ActionResult<List<AuthorResponse>>> GetAll([FromQuery] bool includeBooks = false, CancellationToken cancellationToken = default)
     {
-        var authors = await _authorService.GetAllAsync();
+        var authors = await _authorService.GetAllAsync(cancellationToken, includeBooks);
         return Ok(authors);
     }
 
     /// <summary>
-    /// Получение автора по идентификатору
+    /// Создать нового автора
     /// </summary>
-    /// <param name="id">Идентификатор автора</param>
-    /// <returns>Данные автора</returns>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<AuthorReferenceResponse>> GetById([FromRoute] Guid id)
+    /// <param name="request">DTO с данными для создания автора</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>Созданный автор</returns>
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateAuthorRequest request, CancellationToken cancellationToken = default)
     {
-        var author = await _authorService.GetByIdAsync(id);
-        return Ok(author);
+        var author = await _authorService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = author.Id }, author);
     }
 
     /// <summary>
-    /// Обновление информации об авторе
+    /// Обновить информацию об авторе
     /// </summary>
-    /// <param name="id">Идентификатор автора</param>
-    /// <param name="request">Новые данные автора</param>
-    /// <returns>Обновленные данные автора</returns>
+    /// <param name="id">Идентификатор обновляемого автора</param>
+    /// <param name="request">DTO с обновленными данными автора</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>200 OK при успешном обновлении, 404 Not Found если автор не найден</returns>
     [HttpPut("{id}")]
-    public async Task<ActionResult<AuthorReferenceResponse>> Update([FromRoute] Guid id, [FromBody] UpdateAuthorInfoRequest request)
+    public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] UpdateAuthorInfoRequest request, CancellationToken cancellationToken = default)
     {
-        var author = await _authorService.UpdateAsync(id, request);
-        return Ok(author);
+        var result = await _authorService.UpdateAsync(id, request, cancellationToken);
+        return result ? Ok() : NotFound();
     }
 
     /// <summary>
-    /// Удаление автора
+    /// Удалить автора по идентификатору
     /// </summary>
-    /// <param name="id">Идентификатор автора</param>
-    /// <returns>Статус операции</returns>
+    /// <param name="id">GUID идентификатор автора для удаления</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>200 OK при успешном удалении, 404 Not Found если автор не найден</returns>
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete([FromRoute] Guid id)
+    public async Task<ActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken = default)
     {
-        var success = await _authorService.DeleteAsync(id);
-        return success ? Ok() : NotFound();
+        var result = await _authorService.DeleteAsync(id, cancellationToken);
+        return result ? Ok() : NotFound();
+    }
+
+    /// <summary>
+    /// Проверить существование автора по идентификатору
+    /// </summary>
+    /// <param name="id">GUID идентификатор автора</param>
+    /// <param name="cancellationToken = default">Токен отмены</param>
+    /// <returns>True если автор существует, иначе False</returns>
+    [HttpGet("{id}/exists")]
+    public async Task<ActionResult<bool>> IsExists([FromRoute] Guid id, CancellationToken cancellationToken = default)
+    {
+        var exists = await _authorService.IsExistsAsync(id, cancellationToken);
+        return Ok(exists);
     }
 }

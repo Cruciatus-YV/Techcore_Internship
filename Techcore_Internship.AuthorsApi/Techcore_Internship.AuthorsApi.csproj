@@ -13,4 +13,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Techcore_Internship.Data\Techcore_Internship.Data.csproj" />
+  </ItemGroup>
+
 </Project>

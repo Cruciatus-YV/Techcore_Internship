@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
-using Techcore_Internship.Contracts;
+using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Data.Repositories.Mongo.Interfaces;
 
 namespace Techcore_Internship.Application.Services.Background;

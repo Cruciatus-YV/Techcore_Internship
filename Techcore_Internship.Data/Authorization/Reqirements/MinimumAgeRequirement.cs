@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace Techcore_Internship.Application.Authorization.Reqirements;
+namespace Techcore_Internship.Data.Authorization.Reqirements;
 
 public class MinimumAgeRequirement : IAuthorizationRequirement
 {
