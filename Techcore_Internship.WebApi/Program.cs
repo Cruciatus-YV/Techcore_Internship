@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
+using Polly;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Context;
@@ -107,7 +108,11 @@ builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
     client.BaseAddress = new Uri("https://localhost:7004");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+})
+.AddTransientHttpErrorPolicy(policy => policy
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: _ => TimeSpan.FromSeconds(1)));
 
 var app = builder.Build();
 
