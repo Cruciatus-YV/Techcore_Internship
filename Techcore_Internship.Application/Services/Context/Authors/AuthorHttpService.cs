@@ -11,7 +11,6 @@ public class AuthorHttpService : IAuthorHttpService
     private readonly HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    // HttpClient теперь инжектируется через конструктор!
     public AuthorHttpService(HttpClient httpClient)
     {
         _httpClient = httpClient;
@@ -160,13 +159,11 @@ public class AuthorHttpService : IAuthorHttpService
     {
         var response = await _httpClient.GetAsync("/api/test/circuit-breaker-test", cancellationToken);
 
-        // Просто возвращаем ответ - Polly сам обработает статус код
         if (response.IsSuccessStatusCode)
         {
             return await response.Content.ReadAsStringAsync(cancellationToken);
         }
 
-        // Для не-success статусов возвращаем содержимое или бросаем исключение
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
         throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
     }

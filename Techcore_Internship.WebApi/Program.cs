@@ -4,12 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Extensions.Http;
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Context;
@@ -19,7 +13,6 @@ using Techcore_Internship.Application.Services.Context.ProductReviews;
 using Techcore_Internship.Application.Services.Context.Users;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.Configurations;
-using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
 using Techcore_Internship.Data;
 using Techcore_Internship.Data.Authorization.Handlers;
 using Techcore_Internship.Data.Cache;
@@ -108,48 +101,14 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
 
-// Polly Policies
-var retryPolicy = HttpPolicyExtensions
-    .HandleTransientHttpError()
-    .WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(1));
 
-var circuitBreakerPolicy = HttpPolicyExtensions
-    .HandleTransientHttpError()
-    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
-
-var fallbackPolicy = Policy<HttpResponseMessage>
-    .Handle<BrokenCircuitException>()
-    .FallbackAsync(
-        fallbackAction: async (cancelationToken) =>
-        {
-            var defaultAuthor = new AuthorResponse
-            {
-                Id = Guid.Empty,
-                FirstName = "Unknown",
-                LastName = "Author",
-                Books = []
-            };
-
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(
-                    JsonSerializer.Serialize(defaultAuthor, new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    }),
-                    Encoding.UTF8,
-                    "application/json")
-            };
-        });
-
-var policyWrap = Policy.WrapAsync(fallbackPolicy, circuitBreakerPolicy, retryPolicy);
 
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7004");
 })
-.AddPolicyHandler(policyWrap);
+.AddPolicyHandler(PollyExtentions.GetPolicyWrap());
 
 var app = builder.Build();
 
