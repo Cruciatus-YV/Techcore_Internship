@@ -104,8 +104,6 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
 
-
-
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 {
