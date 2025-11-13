@@ -35,9 +35,22 @@ services:
       - Mongo_Data:/data/db
       - Mongo_Config:/data/configdb
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: Techcore_Internship_RabbitMQ_Container
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: Cruciatus
+      RABBITMQ_DEFAULT_PASS: 12345qwerty
+    volumes:
+      - RabbitMQ_Data:/var/lib/rabbitmq
+
 volumes:
   Postgres_Data:
   Redis_Data:
   Mongo_Data:
   Mongo_Config:
-    
+  RabbitMQ_Data:
