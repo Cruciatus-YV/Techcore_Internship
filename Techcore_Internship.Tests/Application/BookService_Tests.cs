@@ -2,10 +2,11 @@
 using Techcore_Internship.Application.Services.Context.Books;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
+using Techcore_Internship.Data.Cache.Interfaces;
 using Techcore_Internship.Data.Repositories.EF.Interfaces;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Tests.Application;
+namespace Techcore_Internship.UnitTests.Application;
 
 public class BookService_Tests
 {

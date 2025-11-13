@@ -8,15 +8,13 @@ public class GenericRepository<TEntity, TId> : IGenericRepository<TEntity, TId>
 where TEntity : class, IHaveId<TId>
 where TId : struct
 {
-    private protected readonly ApplicationDbContext _dbContext;
-    private protected readonly DbSet<TEntity> _dbSet;
-    private protected readonly IQueryable<TEntity> _asNoTracking;
+    public readonly ApplicationDbContext _dbContext;
+    public readonly DbSet<TEntity> _dbSet;
 
     public GenericRepository(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
         _dbSet = _dbContext.Set<TEntity>();
-        _asNoTracking = _dbSet.AsNoTracking();
     }
 
     public async Task InsertEntityAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -35,12 +33,12 @@ where TId : struct
 
     public async Task<List<TEntity>> GetAllEntitiesAsync(CancellationToken cancellationToken = default)
     {
-        return await _asNoTracking.ToListAsync(cancellationToken);
+        return await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
     }
 
     public async Task<TEntity?> GetEntityByIdAsync(TId id, CancellationToken cancellationToken = default)
     {
-        return await _asNoTracking.FirstOrDefaultAsync(x => x.Id.Equals(id), cancellationToken);
+        return await _dbSet.AsNoTracking().FirstOrDefaultAsync(x => x.Id.Equals(id), cancellationToken);
     }
 
     public async Task<bool> UpdateEntityAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -59,7 +57,7 @@ where TId : struct
 
     public async Task<bool> IsEntityExists(TId id, CancellationToken cancellationToken = default)
     {
-        var entity = await _asNoTracking.CountAsync(x => x.Id.Equals(id), cancellationToken);
+        var entity = await _dbSet.AsNoTracking().CountAsync(x => x.Id.Equals(id), cancellationToken);
 
         return entity > 0;
     }

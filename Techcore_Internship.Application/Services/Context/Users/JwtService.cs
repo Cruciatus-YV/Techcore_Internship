@@ -8,7 +8,7 @@ using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Domain.Entities;
 
-namespace Techcore_Internship.Application.Services;
+namespace Techcore_Internship.Application.Services.Context.Users;
 
 public class JwtService : IJwtService
 {

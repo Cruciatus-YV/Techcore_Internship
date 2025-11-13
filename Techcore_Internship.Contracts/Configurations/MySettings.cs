@@ -1,4 +1,4 @@
-﻿namespace Techcore_Internship.Contracts;
+﻿namespace Techcore_Internship.Contracts.Configurations;
 
 public class MySettings
 {
