@@ -59,6 +59,9 @@ builder.Services.AddCustomAuthorization();
 builder.Services.AddCustomRedis(builder);
 builder.Services.AddOutputCache();
 
+// MassTransit (RabbitMQ)
+builder.Services.AddCustomMassTransit();
+
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(

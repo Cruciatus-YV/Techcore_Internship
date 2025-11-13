@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,6 +107,25 @@ public static class ServiceRegistrationExtentions
 
             options.AddPolicy(AgePolicies.OLDER_THEN_21, policy =>
                 policy.Requirements.Add(new MinimumAgeRequirement(21)));
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddCustomMassTransit(this IServiceCollection services)
+    {
+        services.AddMassTransit(x =>
+        {
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host("localhost", "/", h =>
+                {
+                    h.Username("Cruciatus");
+                    h.Password("12345qwerty");
+                });
+
+                cfg.ConfigureEndpoints(context);
+            });
         });
 
         return services;
