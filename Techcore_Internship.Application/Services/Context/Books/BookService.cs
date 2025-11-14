@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using MassTransit;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Events;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
 using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
@@ -26,6 +28,7 @@ public class BookService : IBookService
     private readonly IProductReviewRepository _productReviewRepository;
     private readonly IOptions<RedisSettings> _redisSettings;
     private readonly ApplicationDbContext _dbContext;
+    private readonly IBus _bus;
 
     public BookService(IBookRepository bookRepository,
                        ApplicationDbContext dbContext,
@@ -34,7 +37,8 @@ public class BookService : IBookService
                        IRedisCacheService cache,
                        IProductReviewRepository productReviewRepository,
                        IOptions<RedisSettings> redisSettings,
-                       IDistributedCache distributedCache)
+                       IDistributedCache distributedCache,
+                       IBus bus)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
@@ -44,6 +48,7 @@ public class BookService : IBookService
         _productReviewRepository = productReviewRepository;
         _redisSettings = redisSettings;
         _distributedCache = distributedCache;
+        _bus = bus;
     }
 
     public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
@@ -170,17 +175,15 @@ public class BookService : IBookService
 
         try
         {
-            // Валидируем авторов через IAuthorHttpService
             var authors = await _authorHttpService.GetByIdsAsync(request.AuthorIds, cancellationToken);
             if (authors?.Count != request.AuthorIds.Count)
                 throw new ArgumentException("Некорректный список AuthorIds");
 
-            var authorEntities = authors.Select(a => new AuthorEntity
+            var authorEntities = request.AuthorIds.Select(id =>
             {
-                Id = a.Id,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                IsDeleted = false
+                var author = new AuthorEntity { Id = id };
+                _dbContext.Authors.Attach(author);
+                return author;
             }).ToList();
 
             var newBook = new BookEntity()
@@ -196,6 +199,13 @@ public class BookService : IBookService
             await transaction.CommitAsync(cancellationToken);
 
             await ClearBookCaches(newBook, request.AuthorIds);
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
+            await _bus.Publish(new BookCreatedEvent
+            {
+                BookId = newBook.Id,
+                BookTitle = newBook.Title,
+                Year = newBook.Year
+            }, cancellationToken);
 
             return CreateBookResponse(newBook, authors);
         }
@@ -214,7 +224,6 @@ public class BookService : IBookService
         {
             var allAuthorIds = new List<Guid>();
 
-            // Создаем новых авторов через IAuthorHttpService
             if (request.NewAuthors?.Any() == true)
             {
                 foreach (var newAuthorDto in request.NewAuthors)
@@ -224,27 +233,19 @@ public class BookService : IBookService
                 }
             }
 
-            // Добавляем существующих авторов
             if (request.ExistingAuthorIds?.Any() == true)
             {
-                var existingAuthors = await _authorHttpService.GetByIdsAsync(request.ExistingAuthorIds, cancellationToken);
-                if (existingAuthors?.Count != request.ExistingAuthorIds.Count)
-                    throw new ArgumentException("Некорректный список ExistingAuthorsIds");
-
                 allAuthorIds.AddRange(request.ExistingAuthorIds);
             }
 
             if (!allAuthorIds.Any())
                 throw new ArgumentException("Книга должна иметь хотя бы одного автора");
 
-            // Получаем полные данные авторов
-            var allAuthors = await _authorHttpService.GetByIdsAsync(allAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
-            var authorEntities = allAuthors.Select(a => new AuthorEntity
+            var authorEntities = allAuthorIds.Select(id =>
             {
-                Id = a.Id,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                IsDeleted = false
+                var author = new AuthorEntity { Id = id };
+                _dbContext.Authors.Attach(author);
+                return author;
             }).ToList();
 
             var newBook = new BookEntity()
@@ -260,6 +261,13 @@ public class BookService : IBookService
             await transaction.CommitAsync(cancellationToken);
 
             await ClearBookCaches(newBook, allAuthorIds);
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
+            await _bus.Publish(new BookCreatedEvent
+            {
+                BookId = newBook.Id,
+                BookTitle = newBook.Title,
+                Year = newBook.Year
+            }, cancellationToken);
 
             return newBook.Id;
         }
@@ -289,21 +297,22 @@ public class BookService : IBookService
             if (request.NewAuthors?.Any() == true || request.ExistingAuthorIds?.Any() == true)
             {
                 var updatedAuthorIds = await ProcessAuthorsViaHttpAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
-                var updatedAuthors = await _authorHttpService.GetByIdsAsync(updatedAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
 
-                existingBook.Authors = updatedAuthors.Select(a => new AuthorEntity
+                var authorEntities = updatedAuthorIds.Select(id =>
                 {
-                    Id = a.Id,
-                    FirstName = a.FirstName,
-                    LastName = a.LastName,
-                    IsDeleted = false
+                    var author = new AuthorEntity { Id = id };
+                    _dbContext.Authors.Attach(author);
+                    return author;
                 }).ToList();
+
+                existingBook.Authors = authorEntities;
             }
 
             await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             await ClearBookCaches(existingBook, oldAuthorIds);
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
 
             return true;
         }
@@ -330,20 +339,21 @@ public class BookService : IBookService
                 throw new ArgumentException("Книга не может быть без авторов");
 
             var updatedAuthorIds = await ProcessAuthorsViaHttpAsync(request.NewAuthors, request.ExistingAuthorIds, cancellationToken);
-            var updatedAuthors = await _authorHttpService.GetByIdsAsync(updatedAuthorIds, cancellationToken) ?? new List<AuthorResponse>();
 
-            existingBook.Authors = updatedAuthors.Select(a => new AuthorEntity
+            var authorEntities = updatedAuthorIds.Select(id =>
             {
-                Id = a.Id,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                IsDeleted = false
+                var author = new AuthorEntity { Id = id };
+                _dbContext.Authors.Attach(author);
+                return author;
             }).ToList();
+
+            existingBook.Authors = authorEntities;
 
             await _bookRepository.UpdateEntityAsync(existingBook, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             await ClearBookCaches(existingBook, oldAuthorIds);
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
 
             return true;
         }
@@ -373,6 +383,7 @@ public class BookService : IBookService
             await _cache.RemoveAsync("books_all_dapper");
             await _cache.RemoveAsync($"books_year_{oldYear}");
             await _cache.RemoveAsync($"books_year_{existingBook.Year}");
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
         }
 
         return result;
@@ -393,6 +404,7 @@ public class BookService : IBookService
             await _cache.RemoveAsync($"book_{bookId}");
             await _cache.RemoveAsync("books_all_ef");
             await _cache.RemoveAsync("books_all_dapper");
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
         }
 
         return result;
@@ -416,6 +428,7 @@ public class BookService : IBookService
             await _cache.RemoveAsync("books_all_dapper");
             await _cache.RemoveAsync($"books_year_{oldYear}");
             await _cache.RemoveAsync($"books_year_{year}");
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
         }
 
         return result;
@@ -442,6 +455,7 @@ public class BookService : IBookService
             await transaction.CommitAsync(cancellationToken);
 
             await ClearBookCaches(existingBook, authorIds);
+            await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
 
             return true;
         }
@@ -467,6 +481,7 @@ public class BookService : IBookService
         await _bookRepository.DeleteEntityAsync(requestedBook, cancellationToken);
 
         await ClearBookCaches(requestedBook, authorIds);
+        await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
 
         return true;
     }
@@ -503,10 +518,6 @@ public class BookService : IBookService
 
         if (existingAuthorIds?.Any() == true)
         {
-            var existingAuthors = await _authorHttpService.GetByIdsAsync(existingAuthorIds, cancellationToken);
-            if (existingAuthors?.Count != existingAuthorIds.Count)
-                throw new ArgumentException("Некорректный список ExistingAuthorIds");
-
             authorIds.AddRange(existingAuthorIds);
         }
 

@@ -59,6 +59,9 @@ builder.Services.AddCustomAuthorization();
 builder.Services.AddCustomRedis(builder);
 builder.Services.AddOutputCache();
 
+// MassTransit (RabbitMQ)
+builder.Services.AddCustomMassTransit();
+
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
@@ -100,8 +103,6 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
-
-
 
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
