@@ -25,6 +25,7 @@ builder.Services.AddCustomRedis(builder);
 // Swagger
 builder.Services.AddCustomSwaggerWithJwt();
 
+// MassTransit (Rabbit with retry policy)
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<ClearAuthorCacheConsumer>();
@@ -35,6 +36,11 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username("Cruciatus");
             h.Password("12345qwerty");
+        });
+
+        cfg.UseMessageRetry(r =>
+        {
+            r.Interval(3, TimeSpan.FromSeconds(5));
         });
 
         cfg.ReceiveEndpoint("clear-author-cache-queue", e =>
