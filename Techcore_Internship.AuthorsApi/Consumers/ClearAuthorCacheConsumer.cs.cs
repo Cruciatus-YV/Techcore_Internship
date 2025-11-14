@@ -20,7 +20,7 @@ namespace Techcore_Internship.AuthorsApi.Consumers
             var message = context.Message;
             _logger.LogInformation("Received ClearAuthorCacheRequest at {Timestamp}", message.Timestamp);
 
-            throw new Exception("TEST: Intentional exception for retry demonstration");
+            //throw new Exception("TEST: Intentional exception for retry demonstration");
 
             try
             {

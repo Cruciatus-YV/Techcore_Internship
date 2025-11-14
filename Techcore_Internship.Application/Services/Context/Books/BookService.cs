@@ -5,6 +5,7 @@ using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
+using Techcore_Internship.Contracts.DTOs.Entities.Book.Events;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
 using Techcore_Internship.Contracts.DTOs.Entities.ProductReview.Responses;
@@ -199,6 +200,12 @@ public class BookService : IBookService
 
             await ClearBookCaches(newBook, request.AuthorIds);
             await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
+            await _bus.Publish(new BookCreatedEvent
+            {
+                BookId = newBook.Id,
+                BookTitle = newBook.Title,
+                Year = newBook.Year
+            }, cancellationToken);
 
             return CreateBookResponse(newBook, authors);
         }
@@ -255,6 +262,12 @@ public class BookService : IBookService
 
             await ClearBookCaches(newBook, allAuthorIds);
             await _bus.Publish(new ClearAuthorCacheRequest(), cancellationToken);
+            await _bus.Publish(new BookCreatedEvent
+            {
+                BookId = newBook.Id,
+                BookTitle = newBook.Title,
+                Year = newBook.Year
+            }, cancellationToken);
 
             return newBook.Id;
         }
