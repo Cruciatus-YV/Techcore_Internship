@@ -1,4 +1,6 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Techcore_Internship.AuthorsApi.Consumers;
 using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Data.Repositories;
 using Techcore_Internship.AuthorsApi.Services;
@@ -22,6 +24,33 @@ builder.Services.AddCustomRedis(builder);
 
 // Swagger
 builder.Services.AddCustomSwaggerWithJwt();
+
+// MassTransit (Rabbit with retry policy)
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<ClearAuthorCacheConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("Cruciatus");
+            h.Password("12345qwerty");
+        });
+
+        cfg.UseMessageRetry(r =>
+        {
+            r.Interval(3, TimeSpan.FromSeconds(5));
+        });
+
+        cfg.ReceiveEndpoint("clear-author-cache-queue", e =>
+        {
+            e.ConfigureConsumer<ClearAuthorCacheConsumer>(context);
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // Authentication
 builder.Services.AddCustomAuthentication(builder);
