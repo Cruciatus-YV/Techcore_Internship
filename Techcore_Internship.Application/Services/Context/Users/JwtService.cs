@@ -19,7 +19,7 @@ public class JwtService : IJwtService
         _jwtSettings = jwtSettings.Value;
     }
 
-    public string GenerateTokenAsync(ApplicationUserEntity user, IList<string> roles) // ← Поменять параметр
+    public string GenerateTokenAsync(ApplicationUserEntity user, IList<string> roles)
     {
         var claims = new List<Claim>
         {
