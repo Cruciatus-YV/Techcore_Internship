@@ -1,4 +1,5 @@
-﻿using MassTransit;
+﻿using Confluent.Kafka;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -126,6 +127,25 @@ public static class ServiceRegistrationExtentions
 
                 cfg.ConfigureEndpoints(context);
             });
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddKafka(this IServiceCollection services)
+    {
+        services.AddSingleton<IProducer<string, string>>(serviceProvider =>
+        {
+            var config = new ProducerConfig
+            {
+                BootstrapServers = "localhost:9092",
+                MessageTimeoutMs = 5000,
+                RequestTimeoutMs = 5000,
+                EnableDeliveryReports = true,
+                Acks = Acks.All
+            };
+
+            return new ProducerBuilder<string, string>(config).Build();
         });
 
         return services;

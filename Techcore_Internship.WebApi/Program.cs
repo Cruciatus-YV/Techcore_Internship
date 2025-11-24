@@ -62,6 +62,9 @@ builder.Services.AddOutputCache();
 // MassTransit (RabbitMQ)
 builder.Services.AddCustomMassTransit();
 
+// Kafka
+builder.Services.AddKafka();
+
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
