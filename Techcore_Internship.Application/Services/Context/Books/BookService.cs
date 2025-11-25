@@ -1,6 +1,9 @@
 ﻿using MassTransit;
+using Confluent.Kafka;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 using Techcore_Internship.Application.Services.Interfaces;
 using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Contracts.DTOs.Entities.Author.Requests;
@@ -29,6 +32,8 @@ public class BookService : IBookService
     private readonly IOptions<RedisSettings> _redisSettings;
     private readonly ApplicationDbContext _dbContext;
     private readonly IBus _bus;
+    private readonly IProducer<string, string> _producer;
+    private readonly ILogger<BookService> _logger;
 
     public BookService(IBookRepository bookRepository,
                        ApplicationDbContext dbContext,
@@ -38,7 +43,9 @@ public class BookService : IBookService
                        IProductReviewRepository productReviewRepository,
                        IOptions<RedisSettings> redisSettings,
                        IDistributedCache distributedCache,
-                       IBus bus)
+                       IBus bus,
+                       IProducer<string, string> producer,
+                       ILogger<BookService> logger)
     {
         _bookRepository = bookRepository;
         _dbContext = dbContext;
@@ -49,6 +56,8 @@ public class BookService : IBookService
         _redisSettings = redisSettings;
         _distributedCache = distributedCache;
         _bus = bus;
+        _producer = producer;
+        _logger = logger;
     }
 
     public async Task<BookResponse?> GetByIdOutputCacheTestAsync(Guid id, CancellationToken cancellationToken = default)
@@ -66,7 +75,7 @@ public class BookService : IBookService
     {
         var cacheKey = $"book_{id}";
 
-        return await _cache.GetOrCreateAsync(cacheKey,
+        var book = await _cache.GetOrCreateAsync(cacheKey,
             async () =>
             {
                 var bookEntity = await _bookRepository.GetByIdWithAuthorsAsync(id, cancellationToken);
@@ -78,6 +87,37 @@ public class BookService : IBookService
                 return CreateBookResponse(bookEntity, authors);
             },
             TimeSpan.FromMinutes(30));
+
+        if (book != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var message = new Message<string, string>
+                    {
+                        Key = id.ToString(),
+                        Value = JsonSerializer.Serialize(new
+                        {
+                            BookId = id,
+                            BookTitle = book.Title,
+                            ViewDate = DateTime.UtcNow,
+                            EventType = "book_view"
+                        })
+                    };
+
+                    var result = await _producer.ProduceAsync("book_views", message);
+                    _logger.LogInformation("Book view event sent for book {BookId} at {Offset}",
+                        id, result.TopicPartitionOffset.Offset);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send book view event for book {BookId}", id);
+                }
+            });
+        }
+
+        return book;
     }
 
     public async Task<List<BookResponse>?> GetByAuthorIdAsync(Guid authorId, CancellationToken cancellationToken = default)
