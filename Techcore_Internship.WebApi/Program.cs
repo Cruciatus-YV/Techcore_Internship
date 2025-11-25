@@ -106,6 +106,7 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
+builder.Services.AddHostedService<KafkaConsumerService>();
 
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
