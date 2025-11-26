@@ -23,7 +23,7 @@ public class KafkaConsumerService : BackgroundService
         var config = new ConsumerConfig
         {
             BootstrapServers = "localhost:9092",
-            GroupId = "analytics-group",  // Добавляем GroupId
+            GroupId = "analytics-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoOffsetStore = false
         };
@@ -43,8 +43,10 @@ public class KafkaConsumerService : BackgroundService
             {
                 var result = _consumer.Consume(stoppingToken);
 
-                _logger.LogInformation("Received message for book {BookId}: {Message}",
-                    result.Message.Key, result.Message.Value);
+                _logger.LogInformation("Received message for book {BookId} from partition {Partition}: {Message}",
+                    result.Message.Key,
+                    result.TopicPartition.Partition.Value,
+                    result.Message.Value);
 
                 await ProcessMessageAsync(result.Message.Value);
 
