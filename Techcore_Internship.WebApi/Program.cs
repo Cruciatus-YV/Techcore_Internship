@@ -66,6 +66,9 @@ builder.Services.AddCustomMassTransit();
 // Kafka
 builder.Services.AddKafka();
 
+// OpenTelemetry
+builder.Services.AddCustomOpenTelemetry();
+
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(

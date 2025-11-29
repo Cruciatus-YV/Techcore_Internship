@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Trace;
 using System.Reflection;
 using System.Text;
 using Techcore_Internship.Data.Authorization.Policies;
@@ -148,6 +149,22 @@ public static class ServiceRegistrationExtentions
             return new ProducerBuilder<string, string>(config).Build();
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services)
+    {
+        services.AddOpenTelemetry()
+        .WithTracing(tracing =>
+        {
+            tracing.AddZipkinExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
+            })
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation();
+        });
         return services;
     }
 }

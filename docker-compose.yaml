@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
@@ -11,6 +13,8 @@ services:
       - "5432:5432"
     volumes:
       - Postgres_Data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -21,6 +25,8 @@ services:
     volumes:
       - Redis_Data:/data
     command: redis-server --appendonly yes
+    networks:
+      - app-network
 
   mongo:
     image: mongo:7.0
@@ -34,6 +40,8 @@ services:
     volumes:
       - Mongo_Data:/data/db
       - Mongo_Config:/data/configdb
+    networks:
+      - app-network
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -47,6 +55,8 @@ services:
       RABBITMQ_DEFAULT_PASS: 12345qwerty
     volumes:
       - RabbitMQ_Data:/var/lib/rabbitmq
+    networks:
+      - app-network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -60,6 +70,8 @@ services:
     volumes:
       - Zookeeper_Data:/var/lib/zookeeper/data
       - Zookeeper_Log:/var/lib/zookeeper/log
+    networks:
+      - app-network
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -69,7 +81,9 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -78,6 +92,19 @@ services:
       - "9092:9092"
     volumes:
       - Kafka_Data:/var/lib/kafka/data
+    networks:
+      - app-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: Techcore_Internship_Zipkin_Container
+    restart: always
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    networks:
+      - app-network
 
 volumes:
   Postgres_Data:
@@ -88,3 +115,7 @@ volumes:
   Zookeeper_Data:
   Zookeeper_Log:
   Kafka_Data:
+
+networks:
+  app-network:
+    driver: bridge
