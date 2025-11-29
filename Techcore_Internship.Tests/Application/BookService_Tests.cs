@@ -41,7 +41,7 @@ public class BookService_Tests
 
         var bookService = new BookService(
             bookRepositoryMock.Object,
-            null, null, null, cacheServiceMock.Object, null, null, null, null
+            null, null, null, cacheServiceMock.Object, null, null, null, null, null, null
         );
 
         // Act
@@ -87,7 +87,7 @@ public class BookService_Tests
 
         var bookService = new BookService(
             bookRepositoryMock.Object,
-            null, null, null, cacheServiceMock.Object, null, null, null, null
+            null, null, null, cacheServiceMock.Object, null, null, null, null, null, null
         );
 
         // Act

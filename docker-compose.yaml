@@ -48,9 +48,43 @@ services:
     volumes:
       - RabbitMQ_Data:/var/lib/rabbitmq
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: Techcore_Internship_Zookeeper_Container
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: always
+    ports:
+      - "2181:2181"
+    volumes:
+      - Zookeeper_Data:/var/lib/zookeeper/data
+      - Zookeeper_Log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: Techcore_Internship_Kafka_Container
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    restart: always
+    ports:
+      - "9092:9092"
+    volumes:
+      - Kafka_Data:/var/lib/kafka/data
+
 volumes:
   Postgres_Data:
   Redis_Data:
   Mongo_Data:
   Mongo_Config:
   RabbitMQ_Data:
+  Zookeeper_Data:
+  Zookeeper_Log:
+  Kafka_Data:

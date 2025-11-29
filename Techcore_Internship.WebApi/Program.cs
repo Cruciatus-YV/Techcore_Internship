@@ -37,6 +37,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
 
+// Mongo
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var connectionString = builder.Configuration.GetConnectionString("MongoDB");
@@ -62,6 +63,9 @@ builder.Services.AddOutputCache();
 // MassTransit (RabbitMQ)
 builder.Services.AddCustomMassTransit();
 
+// Kafka
+builder.Services.AddKafka();
+
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
@@ -84,6 +88,7 @@ builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
 builder.Services.AddScoped<IBookDapperRepository, BookDapperRepository>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
+builder.Services.AddScoped<IBookViewAnalyticsRepository, BookViewAnalyticsRepository>();
 
 // Services
 builder.Services.AddScoped<ITimeService, TimeService>();
@@ -103,6 +108,7 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
+builder.Services.AddHostedService<KafkaConsumerService>();
 
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
