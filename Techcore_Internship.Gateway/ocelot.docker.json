@@ -1,0 +1,107 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/roles/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/roles/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RouteClaimsRequirement": {
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "SuperAdmin"
+      },
+      "Key": "roles-superadmin"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{controller}/{action}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/{controller}/{action}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "public-get-routes"
+    },
+    {
+      "DownstreamPathTemplate": "/api/Auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamHttpMethod": [ "POST" ],
+      "Key": "auth-public"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{controller}/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/{controller}/{everything}",
+      "UpstreamHttpMethod": [ "POST", "PUT", "PATCH" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "Key": "protected-routes-webapi"
+    },
+    {
+      "DownstreamPathTemplate": "/api/Books/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/books/{id}",
+      "UpstreamHttpMethod": [ "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RouteClaimsRequirement": {
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin,SuperAdmin"
+      },
+      "Key": "books-delete-protected"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "authorsapi",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "Key": "authorsapi-all"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://gateway:5000"
+  }
+}
