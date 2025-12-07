@@ -1,0 +1,30 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/Books/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/books/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "Key": "books-all"
+    },
+    {
+      "DownstreamPathTemplate": "/api/Authors/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "authorsapi",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/authors/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "Key": "authors-all"
+    }
+  ]
+}
