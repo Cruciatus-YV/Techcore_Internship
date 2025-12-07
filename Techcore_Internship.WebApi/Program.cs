@@ -55,7 +55,6 @@ builder.Services.AddCustomAuthentication(builder);
 
 builder.Services.AddCustomAuthorization();
 
-
 // Caching
 builder.Services.AddCustomRedis(builder);
 builder.Services.AddOutputCache();
@@ -106,7 +105,6 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddScoped<OpenApiInformationService>();
 
-
 builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 
 // Background services
@@ -116,7 +114,7 @@ builder.Services.AddHostedService<KafkaConsumerService>();
 // HttpClient
 builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7004");
+    client.BaseAddress = new Uri("http://authorsapi:5002");
 })
 .AddPolicyHandler(PollyExtentions.GetPolicyWrap());
 
@@ -133,21 +131,33 @@ app.UseAuthorization();
 
 app.UseOutputCache();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Techcore Internship API V1");
+    c.RoutePrefix = "swagger";
+});
 
 app.MapControllers();
 app.MapHealthChecks("/healthz");
 
-using (var scope = app.Services.CreateScope())
+// Database Initialization
+try
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
+    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.CanConnectAsync();
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     await SeedRoles(roleManager);
+
+    Console.WriteLine("Database initialized successfully");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Database initialization failed: {ex.Message}");
 }
 
 app.Run();
@@ -164,4 +174,5 @@ async Task SeedRoles(RoleManager<IdentityRole> roleManager)
         }
     }
 }
+
 public partial class Program { }

@@ -13,6 +13,12 @@ services:
       - "5432:5432"
     volumes:
       - Postgres_Data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Cruciatus -d Techcore_Internship_Postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - app-network
 
@@ -25,6 +31,12 @@ services:
     volumes:
       - Redis_Data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - app-network
 
@@ -40,6 +52,16 @@ services:
     volumes:
       - Mongo_Data:/data/db
       - Mongo_Config:/data/configdb
+    healthcheck:
+      test: |
+        mongosh --eval "
+        db = db.getSiblingDB('admin');
+        db.auth('Cruciatus', '12345qwerty');
+        db.runCommand({ ping: 1 })"
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - app-network
 
@@ -55,6 +77,12 @@ services:
       RABBITMQ_DEFAULT_PASS: 12345qwerty
     volumes:
       - RabbitMQ_Data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
     networks:
       - app-network
 
@@ -70,6 +98,12 @@ services:
     volumes:
       - Zookeeper_Data:/var/lib/zookeeper/data
       - Zookeeper_Log:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     networks:
       - app-network
 
@@ -77,21 +111,28 @@ services:
     image: confluentinc/cp-kafka:7.4.0
     container_name: Techcore_Internship_Kafka_Container
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     restart: always
     ports:
       - "9092:9092"
+      - "9093:9093"
     volumes:
       - Kafka_Data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     networks:
       - app-network
 
@@ -103,6 +144,162 @@ services:
       - "9411:9411"
     environment:
       - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9411/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
+  webapi:
+    build:
+      context: .
+      dockerfile: Techcore_Internship.WebApi/Dockerfile
+    container_name: Techcore_Internship_WebApi_Container
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
+      - ConnectionStrings__Redis=redis:6379
+      - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
+      - RabbitMQ__Host=rabbitmq
+      - Kafka__BootstrapServers=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for RabbitMQ...' &&
+      until nc -z rabbitmq 5672; do 
+        echo 'RabbitMQ not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'Waiting for Kafka...' &&
+      until nc -z kafka 9092; do 
+        echo 'Kafka not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.WebApi.dll"
+    networks:
+      - app-network
+
+  authorsapi:
+    build:
+      context: .
+      dockerfile: Techcore_Internship.AuthorsApi/Dockerfile
+    container_name: Techcore_Internship_AuthorsApi_Container
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5002
+      - ConnectionStrings__Redis=redis:6379
+      - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
+      - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
+      - RabbitMQ__Host=rabbitmq
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for RabbitMQ...' &&
+      until nc -z rabbitmq 5672; do 
+        echo 'RabbitMQ not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'RabbitMQ is ready! Starting application...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.AuthorsApi.dll"
+    networks:
+      - app-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Techcore_Internship.Gateway/Dockerfile
+    container_name: Techcore_Internship_Gateway_Container
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+    depends_on:
+      webapi:
+        condition: service_started
+      authorsapi:
+        condition: service_started
+    networks:
+      - app-network
+
+  grpc-service-a:
+    build:
+      context: .
+      dockerfile: Techcore_Internship.Grpc.ServiceA/Dockerfile
+    container_name: Techcore_Internship_Grpc_ServiceA_Container
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5003
+      - RabbitMQ__Host=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for RabbitMQ...' &&
+      until nc -z rabbitmq 5672; do 
+        echo 'RabbitMQ not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'RabbitMQ is ready! Starting application...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.Grpc.ServiceA.dll"
+    networks:
+      - app-network
+
+  grpc-service-b:
+    build:
+      context: .
+      dockerfile: Techcore_Internship.Grpc.ServiceB/Dockerfile
+    container_name: Techcore_Internship_Grpc_ServiceB_Container
+    ports:
+      - "5004:5004"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5004
+      - RabbitMQ__Host=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for RabbitMQ...' &&
+      until nc -z rabbitmq 5672; do 
+        echo 'RabbitMQ not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'RabbitMQ is ready! Starting application...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.Grpc.ServiceB.dll"
     networks:
       - app-network
 

@@ -159,12 +159,16 @@ public class AuthorHttpService : IAuthorHttpService
     {
         var response = await _httpClient.GetAsync("/api/test/circuit-breaker-test", cancellationToken);
 
-        if (response.IsSuccessStatusCode)
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"HTTP error {(int)response.StatusCode}: {content}",
+                null,
+                response.StatusCode);
         }
 
-        var content = await response.Content.ReadAsStringAsync(cancellationToken);
-        throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
+        return content;
     }
 }

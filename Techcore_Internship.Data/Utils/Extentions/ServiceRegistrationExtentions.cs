@@ -27,6 +27,10 @@ public static class ServiceRegistrationExtentions
                 Description = "API для стажировки в Techcore"
             });
 
+            c.AddServer(new OpenApiServer { Url = "/" });
+            c.AddServer(new OpenApiServer { Url = "http://localhost:5001" });
+            c.AddServer(new OpenApiServer { Url = "http://webapi:8080" });
+
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             if (File.Exists(xmlPath))
@@ -120,7 +124,10 @@ public static class ServiceRegistrationExtentions
         {
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("localhost", "/", h =>
+                var configuration = context.GetService<IConfiguration>();
+                var host = configuration?["RabbitMQ:Host"] ?? "localhost";
+
+                cfg.Host(host, "/", h =>
                 {
                     h.Username("Cruciatus");
                     h.Password("12345qwerty");
@@ -139,7 +146,7 @@ public static class ServiceRegistrationExtentions
         {
             var config = new ProducerConfig
             {
-                BootstrapServers = "localhost:9092",
+                BootstrapServers = "kafka:9092",
                 MessageTimeoutMs = 5000,
                 RequestTimeoutMs = 5000,
                 EnableDeliveryReports = true,
@@ -159,7 +166,7 @@ public static class ServiceRegistrationExtentions
         {
             tracing.AddZipkinExporter(options =>
             {
-                options.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
+                options.Endpoint = new Uri("http://zipkin:9411/api/v2/spans");
             })
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
