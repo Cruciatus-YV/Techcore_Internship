@@ -1,0 +1,106 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "books-get": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/books/{id}",
+          "Methods": [ "GET" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/Books/{id}" }
+        ]
+      },
+      "books-delete": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/books/{id}",
+          "Methods": [ "DELETE" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/Books/{id}" }
+        ]
+      },
+      "reviews-get": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/reviews/book/{id}",
+          "Methods": [ "GET" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/ProductReviews/product/{id}" }
+        ]
+      },
+      "roles": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/roles/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathPattern": "/api/roles/{**catch-all}" }
+        ]
+      },
+      "auth": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/auth/{**catch-all}",
+          "Methods": [ "POST" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/Auth/{**catch-all}" }
+        ]
+      },
+      "authors": {
+        "ClusterId": "authorsapi-cluster",
+        "Match": {
+          "Path": "/api/authors/{**catch-all}"
+        }
+      },
+      "controller-action-get": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/{controller}/{action}",
+          "Methods": [ "GET" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/{controller}/{action}" }
+        ]
+      },
+      "controller-methods": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/{controller}/{**catch-all}",
+          "Methods": [ "POST", "PUT", "PATCH" ]
+        },
+        "Transforms": [
+          { "PathPattern": "/api/{controller}/{**catch-all}" }
+        ]
+      },
+      "api-all": {
+        "ClusterId": "webapi-cluster",
+        "Match": {
+          "Path": "/api/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathPattern": "/api/{**catch-all}" }
+        ]
+      }
+    },
+    "Clusters": {
+      "webapi-cluster": {
+        "Destinations": {
+          "webapi": {
+            "Address": "http://localhost:5001/"
+          }
+        }
+      },
+      "authorsapi-cluster": {
+        "Destinations": {
+          "authorsapi": {
+            "Address": "http://localhost:5002/"
+          }
+        }
+      }
+    }
+  }
+}

@@ -22,8 +22,8 @@ RUN dotnet publish "./Techcore_Internship.Gateway.csproj" -c $BUILD_CONFIGURATIO
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY ["Techcore_Internship.Gateway/ocelot.local.json", "./"]
-COPY ["Techcore_Internship.Gateway/ocelot.docker.json", "./"]
+COPY ["Techcore_Internship.Gateway/yarp.local.json", "./"]
+COPY ["Techcore_Internship.Gateway/yarp.docker.json", "./"]
 COPY ["Techcore_Internship.Gateway/appsettings.json", "./"]
 COPY ["Techcore_Internship.Gateway/appsettings.Development.json", "./"]
 ENTRYPOINT ["dotnet", "Techcore_Internship.Gateway.dll"]

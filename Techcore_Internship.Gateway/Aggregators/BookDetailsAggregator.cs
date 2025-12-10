@@ -1,34 +1,68 @@
-﻿using Ocelot.Middleware;
-using Ocelot.Multiplexer;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Techcore_Internship.Gateway.Aggregators;
 
-public class BookDetailsAggregator : IDefinedAggregator
+public class BookDetailsAggregator
 {
-    public async Task<DownstreamResponse> Aggregate(List<HttpContext> responses)
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<BookDetailsAggregator> _logger;
+    private readonly bool _isRunningInDocker;
+
+    public BookDetailsAggregator(
+        IHttpClientFactory httpClientFactory,
+        ILogger<BookDetailsAggregator> logger)
     {
-        var bookContent = await responses[0].Items.DownstreamResponse().Content.ReadAsStringAsync();
-        var reviewContent = await responses[1].Items.DownstreamResponse().Content.ReadAsStringAsync();
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" ||
+                           Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "True";
+    }
 
-        var bookData = JsonDocument.Parse(bookContent).RootElement;
-        var reviewData = JsonDocument.Parse(reviewContent).RootElement;
+    private string GetBaseUrl()
+    {
+        return _isRunningInDocker ? "http://webapi:5001" : "http://localhost:5001";
+    }
 
-        var result = new
+    public async Task<object?> AggregateBookDetailsAsync(string bookId)
+    {
+        try
         {
-            Book = bookData,
-            Reviews = reviewData,
-            ReviewCount = reviewData.GetArrayLength(),
-            AggregatedAt = DateTime.UtcNow
-        };
+            var baseUrl = GetBaseUrl();
+            var httpClient = _httpClientFactory.CreateClient();
 
-        var json = JsonSerializer.Serialize(result);
+            var bookTask = httpClient.GetAsync($"{baseUrl}/api/Books/{bookId}");
+            var reviewsTask = httpClient.GetAsync($"{baseUrl}/api/ProductReviews/product/{bookId}");
 
-        return new DownstreamResponse(
-            new StringContent(json, Encoding.UTF8, "application/json"),
-            System.Net.HttpStatusCode.OK,
-            new List<KeyValuePair<string, IEnumerable<string>>>(),
-            "OK");
+            await Task.WhenAll(bookTask, reviewsTask);
+
+            var bookResponse = await bookTask;
+            var reviewsResponse = await reviewsTask;
+
+            if (!bookResponse.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var bookContent = await bookResponse.Content.ReadAsStringAsync();
+            var reviewsContent = reviewsResponse.IsSuccessStatusCode
+                ? await reviewsResponse.Content.ReadAsStringAsync()
+                : "[]";
+
+            var bookData = JsonDocument.Parse(bookContent).RootElement;
+            var reviewData = JsonDocument.Parse(reviewsContent).RootElement;
+
+            return new
+            {
+                Book = bookData,
+                Reviews = reviewData,
+                ReviewCount = reviewData.GetArrayLength(),
+                AggregatedAt = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error aggregating book details for {bookId}");
+            throw;
+        }
     }
 }
