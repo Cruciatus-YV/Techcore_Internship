@@ -1,6 +1,8 @@
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using Ocelot.Multiplexer;
 using Techcore_Internship.Data.Utils.Extentions;
+using Techcore_Internship.Gateway.Aggregators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,15 +20,20 @@ builder.Configuration
     .AddJsonFile(configFile, optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+// Ocelot aggregators
+builder.Services.AddSingleton<IDefinedAggregator, BookDetailsAggregator>();
+
+// Ocelot
 builder.Services.AddOcelot(builder.Configuration);
 
 builder.Services.AddCustomAuthentication(builder);
-
 builder.Services.AddCustomAuthorization();
 
 var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 await app.UseOcelot();
+
 app.Run();

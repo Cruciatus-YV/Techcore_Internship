@@ -1,6 +1,32 @@
 {
   "Routes": [
     {
+      "Key": "Books",
+      "UpstreamPathTemplate": "/api/books/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/Books/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ]
+    },
+    {
+      "Key": "Reviews",
+      "UpstreamPathTemplate": "/api/reviews/book/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/ProductReviews/product/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "webapi",
+          "Port": 5001
+        }
+      ]
+    },
+    {
       "DownstreamPathTemplate": "/api/roles/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -99,6 +125,14 @@
         "AllowedScopes": []
       },
       "Key": "authorsapi-all"
+    }
+  ],
+  "Aggregates": [
+    {
+      "UpstreamPathTemplate": "/details/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "RouteKeys": [ "Books", "Reviews" ],
+      "Aggregator": "BookDetailsAggregator"
     }
   ],
   "GlobalConfiguration": {
