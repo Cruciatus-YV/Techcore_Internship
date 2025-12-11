@@ -1,3 +1,5 @@
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using System.Text.Json;
 using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Gateway.Aggregators;
@@ -17,6 +19,48 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddJsonFile(configFile, optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
+
+// OpenTelemetry
+var serviceName = "Gateway";
+var serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName.ToLowerInvariant(),
+            ["service.type"] = "api-gateway"
+        }))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddSource(serviceName)
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+                options.EnrichWithHttpRequest = (activity, request) =>
+                {
+                    activity.SetTag("http.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
+                    activity.SetTag("http.user_agent", request.Headers.UserAgent.ToString());
+                    activity.SetTag("gateway.route", request.Path);
+                };
+            })
+            .AddHttpClientInstrumentation(options =>
+            {
+                options.RecordException = true;
+                options.EnrichWithHttpRequestMessage = (activity, request) =>
+                {
+                    activity.SetTag("proxy.target", request.RequestUri?.Host);
+                    activity.SetTag("proxy.path", request.RequestUri?.PathAndQuery);
+                };
+            })
+            .AddZipkinExporter(zipkinOptions =>
+            {
+                zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
+                    ?? "http://zipkin:9411/api/v2/spans");
+            });
+    });
 
 builder.Services.AddHttpClient();
 builder.Services.AddReverseProxy()

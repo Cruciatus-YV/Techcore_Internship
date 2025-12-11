@@ -161,13 +161,22 @@ services:
     ports:
       - "5001:5001"
     environment:
+      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
+      # Database connections
       - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
+      # Message brokers
       - RabbitMQ__Host=rabbitmq
       - Kafka__BootstrapServers=kafka:9092
+      # OpenTelemetry
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=BookService
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=BookService
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,16 +188,21 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'Waiting for Kafka...' &&
       until nc -z kafka 9092; do 
         echo 'Kafka not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting application...' &&
@@ -205,12 +219,20 @@ services:
     ports:
       - "5002:5002"
     environment:
+      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5002
+      # Database connections
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
-      - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
+      # Message brokers
       - RabbitMQ__Host=rabbitmq
+      # OpenTelemetry
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=AuthorsApi
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=AuthorsApi
     depends_on:
       postgres:
         condition: service_healthy
@@ -218,14 +240,20 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'RabbitMQ is ready! Starting application...' &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
       sleep 10 &&
       dotnet Techcore_Internship.AuthorsApi.dll"
     networks:
@@ -239,13 +267,41 @@ services:
     ports:
       - "5000:5000"
     environment:
+      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      # OpenTelemetry
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=Gateway
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=Gateway
     depends_on:
       webapi:
         condition: service_started
       authorsapi:
         condition: service_started
+      zipkin:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for dependencies...' &&
+      until nc -z webapi 5001; do 
+        echo 'WebApi not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z authorsapi 5002; do 
+        echo 'AuthorsApi not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting Gateway...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.Gateway.dll"
     networks:
       - app-network
 
@@ -257,20 +313,34 @@ services:
     ports:
       - "5003:5003"
     environment:
+      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5003
+      # Message brokers
       - RabbitMQ__Host=rabbitmq
+      # OpenTelemetry
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=GrpcServiceA
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=GrpcServiceA
     depends_on:
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'RabbitMQ is ready! Starting application...' &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
       sleep 10 &&
       dotnet Techcore_Internship.Grpc.ServiceA.dll"
     networks:
@@ -284,20 +354,40 @@ services:
     ports:
       - "5004:5004"
     environment:
+      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5004
+      # Message brokers
       - RabbitMQ__Host=rabbitmq
+      # OpenTelemetry
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=GrpcServiceB
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=GrpcServiceB
     depends_on:
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+      grpc-service-a:
+        condition: service_started
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'RabbitMQ is ready! Starting application...' &&
+      until nc -z grpc-service-a 5003; do 
+        echo 'gRPC Service A not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
       sleep 10 &&
       dotnet Techcore_Internship.Grpc.ServiceB.dll"
     networks:

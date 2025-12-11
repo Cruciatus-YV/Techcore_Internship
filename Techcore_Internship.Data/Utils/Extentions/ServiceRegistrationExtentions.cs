@@ -2,10 +2,12 @@
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Reflection;
 using System.Text;
@@ -159,19 +161,49 @@ public static class ServiceRegistrationExtentions
         return services;
     }
 
-    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services)
+    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services, IConfiguration configuration = null)
     {
+        var serviceProvider = services.BuildServiceProvider();
+        var config = configuration ?? serviceProvider.GetService<IConfiguration>();
+        var env = serviceProvider.GetService<IWebHostEnvironment>();
+
+        var serviceName = config?["OpenTelemetry:ServiceName"] ?? env?.ApplicationName ?? "UnknownService";
+        var serviceVersion = config?["OpenTelemetry:ServiceVersion"] ?? "1.0.0";
+        var zipkinEndpoint = config?["Zipkin:Endpoint"] ?? "http://zipkin:9411/api/v2/spans";
+
         services.AddOpenTelemetry()
-        .WithTracing(tracing =>
-        {
-            tracing.AddZipkinExporter(options =>
+            .ConfigureResource(resource => resource
+                .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = env?.EnvironmentName.ToLowerInvariant() ?? "development",
+                }))
+            .WithTracing(tracing =>
             {
-                options.Endpoint = new Uri("http://zipkin:9411/api/v2/spans");
-            })
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddEntityFrameworkCoreInstrumentation();
-        });
+                tracing
+                    .AddSource(serviceName)
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                        options.EnrichWithHttpRequest = (activity, request) =>
+                        {
+                            activity.SetTag("http.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
+                        };
+                    })
+                    .AddHttpClientInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                    })
+                    .AddEntityFrameworkCoreInstrumentation(options =>
+                    {
+                        options.SetDbStatementForText = true;
+                    })
+                    .AddZipkinExporter(zipkinOptions =>
+                    {
+                        zipkinOptions.Endpoint = new Uri(zipkinEndpoint);
+                    });
+            });
+
         return services;
     }
 }

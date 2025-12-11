@@ -66,7 +66,7 @@ builder.Services.AddCustomMassTransit();
 builder.Services.AddKafka();
 
 // OpenTelemetry
-builder.Services.AddCustomOpenTelemetry();
+builder.Services.AddCustomOpenTelemetry(builder.Configuration);
 
 // Validation
 builder.Services.AddFluentValidationAutoValidation();

@@ -1,5 +1,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Techcore_Internship.AuthorsApi.Consumers;
 using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Data.Repositories;
@@ -24,6 +26,36 @@ builder.Services.AddCustomRedis(builder);
 
 // Swagger
 builder.Services.AddCustomSwaggerWithJwt();
+
+// OpenTelemetry
+var serviceName = "AuthorsApi";
+var serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName.ToLowerInvariant(),
+        }))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddSource(serviceName)
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+            .AddHttpClientInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+            .AddZipkinExporter(zipkinOptions =>
+            {
+                zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
+                    ?? "http://localhost:9411/api/v2/spans");
+            });
+    });
 
 // MassTransit (Rabbit with retry policy)
 builder.Services.AddMassTransit(x =>
