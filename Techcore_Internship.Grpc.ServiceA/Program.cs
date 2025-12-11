@@ -11,7 +11,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<BookCreatedEventConsumer>();
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
+        cfg.Host("rabbitmq", "/", h =>
         {
             h.Username("Cruciatus");
             h.Password("12345qwerty");
@@ -20,9 +20,14 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080);
+});
+
 var app = builder.Build();
 
 app.MapGrpcService<ServiceA>();
-app.MapGet("/", () => "ServiceA is running on https://localhost:7001");
+app.MapGet("/", () => "ServiceA is running on http://localhost:8080");
 
 app.Run();

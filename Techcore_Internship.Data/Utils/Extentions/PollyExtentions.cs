@@ -43,7 +43,7 @@ public static class PollyExtentions
                     };
                 });
 
-        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(3);
+        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(30);
 
         var policyWrap = Policy.WrapAsync(fallbackPolicy, timeoutPolicy, circuitBreakerPolicy, retryPolicy);
 

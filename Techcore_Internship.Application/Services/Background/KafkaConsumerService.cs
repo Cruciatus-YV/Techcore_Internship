@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -19,14 +20,17 @@ public class KafkaConsumerService : BackgroundService
     private readonly int _maxDegreeOfParallelism = 4;
     private readonly ConcurrentQueue<ConsumeResult<string, string>> _messagesBuffer = new();
 
-    public KafkaConsumerService(ILogger<KafkaConsumerService> logger, IServiceProvider serviceProvider)
+    public KafkaConsumerService(
+        ILogger<KafkaConsumerService> logger,
+        IServiceProvider serviceProvider,
+        IConfiguration configuration)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
 
         var config = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
+            BootstrapServers = configuration["Kafka:BootstrapServers"] ?? "kafka:9092",
             GroupId = "analytics-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoOffsetStore = false
@@ -37,6 +41,12 @@ public class KafkaConsumerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+        {
+            Console.WriteLine("KafkaConsumerService: Skipping in local development");
+            return;
+        }
+
         await Task.Yield();
         _consumer.Subscribe("book_views");
         _logger.LogInformation("Kafka Consumer started. Subscribed to topic: book_views, GroupId: analytics-group");

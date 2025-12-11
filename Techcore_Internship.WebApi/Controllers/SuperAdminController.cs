@@ -38,4 +38,10 @@ public class RolesController : ControllerBase
         else
             return BadRequest("Failed to remove role");
     }
+
+    [HttpGet("test")]
+    public IActionResult Test()
+    {
+        return Ok("SuperAdmin access confirmed.");
+    }
 }

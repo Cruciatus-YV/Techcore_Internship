@@ -8,7 +8,7 @@ builder.Services.AddGrpc();
 
 builder.Services.AddGrpcClient<Techcore_Internship.Grpc.ServiceA.Greeter.GreeterClient>(options =>
 {
-    options.Address = new Uri("https://localhost:7001");
+    options.Address = new Uri("http://grpc-service-a:8080");
 });
 
 builder.Services.AddMassTransit(x =>
@@ -16,7 +16,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<BookCreatedEventConsumer>();
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
+        cfg.Host("rabbitmq", "/", h =>
         {
             h.Username("Cruciatus");
             h.Password("12345qwerty");
@@ -25,10 +25,15 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080);
+});
+
 var app = builder.Build();
 
 app.MapGrpcService<ServiceB>();
-app.MapGet("/", () => "ServiceB is running on https://localhost:7002");
+app.MapGet("/", () => "ServiceB is running on http://localhost:8080");
 
 app.MapGet("/test", async (Techcore_Internship.Grpc.ServiceA.Greeter.GreeterClient client) =>
 {

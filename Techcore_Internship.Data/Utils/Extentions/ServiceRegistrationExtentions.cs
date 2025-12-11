@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Trace;
 using System.Reflection;
 using System.Text;
 using Techcore_Internship.Data.Authorization.Policies;
@@ -25,6 +26,10 @@ public static class ServiceRegistrationExtentions
                 Version = "v1",
                 Description = "API для стажировки в Techcore"
             });
+
+            c.AddServer(new OpenApiServer { Url = "/" });
+            c.AddServer(new OpenApiServer { Url = "http://localhost:5001" });
+            c.AddServer(new OpenApiServer { Url = "http://webapi:8080" });
 
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -119,7 +124,10 @@ public static class ServiceRegistrationExtentions
         {
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("localhost", "/", h =>
+                var configuration = context.GetService<IConfiguration>();
+                var host = configuration?["RabbitMQ:Host"] ?? "localhost";
+
+                cfg.Host(host, "/", h =>
                 {
                     h.Username("Cruciatus");
                     h.Password("12345qwerty");
@@ -138,7 +146,7 @@ public static class ServiceRegistrationExtentions
         {
             var config = new ProducerConfig
             {
-                BootstrapServers = "localhost:9092",
+                BootstrapServers = "kafka:9092",
                 MessageTimeoutMs = 5000,
                 RequestTimeoutMs = 5000,
                 EnableDeliveryReports = true,
@@ -148,6 +156,22 @@ public static class ServiceRegistrationExtentions
             return new ProducerBuilder<string, string>(config).Build();
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services)
+    {
+        services.AddOpenTelemetry()
+        .WithTracing(tracing =>
+        {
+            tracing.AddZipkinExporter(options =>
+            {
+                options.Endpoint = new Uri("http://zipkin:9411/api/v2/spans");
+            })
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation();
+        });
         return services;
     }
 }
