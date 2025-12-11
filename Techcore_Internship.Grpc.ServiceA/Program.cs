@@ -1,8 +1,9 @@
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Techcore_Internship.Grpc.ServiceA.Consumers;
 using Techcore_Internship.Grpc.ServiceA.Services;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ builder.Services.AddOpenTelemetry()
     {
         tracing
             .AddSource(serviceName)
+            .AddSource("MassTransit")
             .AddAspNetCoreInstrumentation(options =>
             {
                 options.RecordException = true;
@@ -31,6 +33,14 @@ builder.Services.AddOpenTelemetry()
                 zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
                     ?? "http://zipkin:9411/api/v2/spans");
             });
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter(serviceName)
+            .AddMeter("MassTransit")
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation();
     });
 
 builder.Services.AddGrpc();

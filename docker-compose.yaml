@@ -75,6 +75,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: Cruciatus
       RABBITMQ_DEFAULT_PASS: 12345qwerty
+      RABBITMQ_NODE_IP_ADDRESS: 0.0.0.0
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-proto_dist inet_tcp"
     volumes:
       - RabbitMQ_Data:/var/lib/rabbitmq
     healthcheck:
@@ -244,17 +246,17 @@ services:
         condition: service_healthy
     command: >
       sh -c "
-      echo 'Waiting for dependencies...' &&
-      until nc -z rabbitmq 5672; do 
-        echo 'RabbitMQ not ready yet...' 
-        sleep 5 
+      echo 'Waiting for RabbitMQ to be fully ready...' &&
+      until rabbitmq-ready; do 
+        echo 'RabbitMQ not fully ready yet...' 
+        sleep 10 
       done &&
-      until nc -z zipkin 9411; do 
-        echo 'Zipkin not ready yet...' 
-        sleep 5 
+      until docker exec Techcore_Internship_RabbitMQ_Container rabbitmqctl await_startup 2>/dev/null; do
+        echo 'Waiting for RabbitMQ startup...'
+        sleep 10
       done &&
-      echo 'All dependencies ready! Starting application...' &&
-      sleep 10 &&
+      echo 'RabbitMQ is ready! Starting application...' &&
+      sleep 15 &&
       dotnet Techcore_Internship.AuthorsApi.dll"
     networks:
       - app-network

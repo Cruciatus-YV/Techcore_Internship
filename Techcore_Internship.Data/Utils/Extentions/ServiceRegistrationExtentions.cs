@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Confluent.Kafka.Extensions.OpenTelemetry;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Reflection;
@@ -161,34 +163,27 @@ public static class ServiceRegistrationExtentions
         return services;
     }
 
-    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services, IConfiguration configuration = null)
+    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services, IConfiguration configuration)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var config = configuration ?? serviceProvider.GetService<IConfiguration>();
-        var env = serviceProvider.GetService<IWebHostEnvironment>();
-
-        var serviceName = config?["OpenTelemetry:ServiceName"] ?? env?.ApplicationName ?? "UnknownService";
-        var serviceVersion = config?["OpenTelemetry:ServiceVersion"] ?? "1.0.0";
-        var zipkinEndpoint = config?["Zipkin:Endpoint"] ?? "http://zipkin:9411/api/v2/spans";
+        var serviceName = configuration["OpenTelemetry:ServiceName"] ?? "BookService";
+        var serviceVersion = configuration["OpenTelemetry:ServiceVersion"] ?? "1.0.0";
+        var zipkinEndpoint = configuration["Zipkin:Endpoint"] ?? "http://zipkin:9411/api/v2/spans";
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
                 .AddAttributes(new Dictionary<string, object>
                 {
-                    ["deployment.environment"] = env?.EnvironmentName.ToLowerInvariant() ?? "development",
+                    ["deployment.environment"] = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.ToLowerInvariant() ?? "development",
                 }))
             .WithTracing(tracing =>
             {
                 tracing
                     .AddSource(serviceName)
+                    .AddSource("MassTransit")
                     .AddAspNetCoreInstrumentation(options =>
                     {
                         options.RecordException = true;
-                        options.EnrichWithHttpRequest = (activity, request) =>
-                        {
-                            activity.SetTag("http.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
-                        };
                     })
                     .AddHttpClientInstrumentation(options =>
                     {
@@ -198,10 +193,19 @@ public static class ServiceRegistrationExtentions
                     {
                         options.SetDbStatementForText = true;
                     })
+                    .AddConfluentKafkaInstrumentation()
                     .AddZipkinExporter(zipkinOptions =>
                     {
                         zipkinOptions.Endpoint = new Uri(zipkinEndpoint);
                     });
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddMeter(serviceName)
+                    .AddMeter("MassTransit")
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation();
             });
 
         return services;

@@ -1,5 +1,6 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Techcore_Internship.AuthorsApi.Consumers;
@@ -25,7 +26,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddCustomRedis(builder);
 
 // Swagger
-builder.Services.AddCustomSwaggerWithJwt();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Authors API",
+        Version = "v1"
+    });
+
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+});
 
 // OpenTelemetry
 var serviceName = "AuthorsApi";
@@ -42,6 +58,7 @@ builder.Services.AddOpenTelemetry()
     {
         tracing
             .AddSource(serviceName)
+            .AddSource("MassTransit")
             .AddAspNetCoreInstrumentation(options =>
             {
                 options.RecordException = true;
@@ -50,11 +67,23 @@ builder.Services.AddOpenTelemetry()
             {
                 options.RecordException = true;
             })
+            .AddEntityFrameworkCoreInstrumentation(options =>
+            {
+                options.SetDbStatementForText = true;
+            })
             .AddZipkinExporter(zipkinOptions =>
             {
                 zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
-                    ?? "http://localhost:9411/api/v2/spans");
+                    ?? "http://zipkin:9411/api/v2/spans");
             });
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter(serviceName)
+            .AddMeter("MassTransit")
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation();
     });
 
 // MassTransit (Rabbit with retry policy)
@@ -67,11 +96,16 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username("Cruciatus");
             h.Password("12345qwerty");
+            h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
+            h.Heartbeat(TimeSpan.FromSeconds(10));
         });
 
         cfg.UseMessageRetry(r =>
         {
-            r.Interval(3, TimeSpan.FromSeconds(5));
+            r.Exponential(10,
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(10),
+                TimeSpan.FromSeconds(2));
         });
 
         cfg.ReceiveEndpoint("clear-author-cache-queue", e =>
