@@ -2,6 +2,7 @@ using MassTransit;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Grpc.ServiceB.Consumers;
 using Techcore_Internship.Grpc.ServiceB.Services;
 
@@ -43,6 +44,7 @@ builder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation();
     });
+builder.Services.AddCustomOpenTelemetry2();
 
 builder.Services.AddGrpc();
 
@@ -67,13 +69,13 @@ builder.Services.AddMassTransit(x =>
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(8080);
+    options.ListenAnyIP(5004);
 });
 
 var app = builder.Build();
-
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.MapGrpcService<ServiceB>();
-app.MapGet("/", () => "ServiceB is running on http://localhost:8080");
+app.MapGet("/", () => "ServiceB is running on http://localhost:5004");
 
 app.MapGet("/test", async (Techcore_Internship.Grpc.ServiceA.Greeter.GreeterClient client) =>
 {

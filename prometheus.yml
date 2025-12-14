@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'webapi'
+    static_configs:
+      - targets: ['webapi:5001']
+
+  - job_name: 'authorsapi'
+    static_configs:
+      - targets: ['authorsapi:5002']
+
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:5000']
+
+  - job_name: 'grpc-service-a'
+    static_configs:
+      - targets: ['grpc-service-a:5003']
+
+  - job_name: 'grpc-service-b'
+    static_configs:
+      - targets: ['grpc-service-b:5004']
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

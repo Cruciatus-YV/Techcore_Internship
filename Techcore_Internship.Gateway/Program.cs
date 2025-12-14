@@ -62,6 +62,8 @@ builder.Services.AddOpenTelemetry()
             });
     });
 
+builder.Services.AddCustomOpenTelemetry2();
+
 builder.Services.AddHttpClient();
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -72,7 +74,7 @@ builder.Services.AddCustomAuthentication(builder);
 builder.Services.AddCustomAuthorization();
 
 var app = builder.Build();
-
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.UseAuthentication();
 app.UseAuthorization();
 

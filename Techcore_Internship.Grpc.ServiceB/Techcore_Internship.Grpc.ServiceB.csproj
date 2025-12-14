@@ -20,9 +20,11 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
+    <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="4.6.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Techcore_Internship.Contracts\Techcore_Internship.Contracts.csproj" />
+    <ProjectReference Include="..\Techcore_Internship.Data\Techcore_Internship.Data.csproj" />
   </ItemGroup>
 </Project>
