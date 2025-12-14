@@ -67,6 +67,7 @@ builder.Services.AddKafka();
 
 // OpenTelemetry
 builder.Services.AddCustomOpenTelemetry(builder.Configuration);
+builder.Services.AddCustomOpenTelemetry2();
 
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
@@ -119,6 +120,8 @@ builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 .AddPolicyHandler(PollyExtentions.GetPolicyWrap());
 
 var app = builder.Build();
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseRequestLogging();
 app.UseGlobalExceptionHandler();

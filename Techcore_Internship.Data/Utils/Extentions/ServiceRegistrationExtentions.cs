@@ -3,7 +3,6 @@ using Confluent.Kafka.Extensions.OpenTelemetry;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -206,6 +205,20 @@ public static class ServiceRegistrationExtentions
                     .AddMeter("MassTransit")
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation();
+            });
+
+        return services;
+    }
+
+    public static IServiceCollection AddCustomOpenTelemetry2(this IServiceCollection services)
+    {
+        services.AddOpenTelemetry()
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddPrometheusExporter();
             });
 
         return services;
