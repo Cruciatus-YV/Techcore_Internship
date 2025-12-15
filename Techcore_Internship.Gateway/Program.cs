@@ -1,3 +1,4 @@
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
@@ -61,9 +62,16 @@ builder.Services.AddOpenTelemetry()
                 zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
                     ?? "http://zipkin:9411/api/v2/spans");
             });
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter(serviceName)
+            .AddRuntimeInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
     });
-
-builder.Services.AddCustomOpenTelemetry2();
 
 builder.Services.AddHttpClient();
 builder.Services.AddReverseProxy()

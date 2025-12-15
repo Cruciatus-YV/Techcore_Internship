@@ -68,7 +68,6 @@ builder.Services.AddKafka();
 
 // OpenTelemetry
 builder.Services.AddCustomOpenTelemetry(builder.Configuration);
-builder.Services.AddCustomOpenTelemetry2();
 
 // Validation
 builder.Services.AddFluentValidationAutoValidation();

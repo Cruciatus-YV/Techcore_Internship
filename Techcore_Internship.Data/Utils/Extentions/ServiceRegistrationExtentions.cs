@@ -180,42 +180,17 @@ public static class ServiceRegistrationExtentions
                 tracing
                     .AddSource(serviceName)
                     .AddSource("MassTransit")
-                    .AddAspNetCoreInstrumentation(options =>
-                    {
-                        options.RecordException = true;
-                    })
-                    .AddHttpClientInstrumentation(options =>
-                    {
-                        options.RecordException = true;
-                    })
-                    .AddEntityFrameworkCoreInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                    })
+                    .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
+                    .AddHttpClientInstrumentation(options => { options.RecordException = true; })
+                    .AddEntityFrameworkCoreInstrumentation(options => { options.SetDbStatementForText = true; })
                     .AddConfluentKafkaInstrumentation()
-                    .AddZipkinExporter(zipkinOptions =>
-                    {
-                        zipkinOptions.Endpoint = new Uri(zipkinEndpoint);
-                    });
+                    .AddZipkinExporter(zipkinOptions => { zipkinOptions.Endpoint = new Uri(zipkinEndpoint); });
             })
             .WithMetrics(metrics =>
             {
                 metrics
-                    .AddMeter(serviceName)
+                    .AddMeter("BookService")
                     .AddMeter("MassTransit")
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
-            });
-
-        return services;
-    }
-
-    public static IServiceCollection AddCustomOpenTelemetry2(this IServiceCollection services)
-    {
-        services.AddOpenTelemetry()
-            .WithMetrics(metrics =>
-            {
-                metrics
                     .AddRuntimeInstrumentation()
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()

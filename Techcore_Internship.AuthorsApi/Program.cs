@@ -60,18 +60,9 @@ builder.Services.AddOpenTelemetry()
         tracing
             .AddSource(serviceName)
             .AddSource("MassTransit")
-            .AddAspNetCoreInstrumentation(options =>
-            {
-                options.RecordException = true;
-            })
-            .AddHttpClientInstrumentation(options =>
-            {
-                options.RecordException = true;
-            })
-            .AddEntityFrameworkCoreInstrumentation(options =>
-            {
-                options.SetDbStatementForText = true;
-            })
+            .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
+            .AddHttpClientInstrumentation(options => { options.RecordException = true; })
+            .AddEntityFrameworkCoreInstrumentation(options => { options.SetDbStatementForText = true; })
             .AddZipkinExporter(zipkinOptions =>
             {
                 zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
@@ -84,9 +75,9 @@ builder.Services.AddOpenTelemetry()
             .AddMeter(serviceName)
             .AddMeter("MassTransit")
             .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation();
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
     });
-builder.Services.AddCustomOpenTelemetry2();
 
 // MassTransit (Rabbit with retry policy)
 builder.Services.AddMassTransit(x =>

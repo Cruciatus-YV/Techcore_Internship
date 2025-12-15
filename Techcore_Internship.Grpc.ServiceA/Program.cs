@@ -42,9 +42,9 @@ builder.Services.AddOpenTelemetry()
             .AddMeter(serviceName)
             .AddMeter("MassTransit")
             .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation();
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
     });
-builder.Services.AddCustomOpenTelemetry2();
 
 builder.Services.AddGrpc();
 
