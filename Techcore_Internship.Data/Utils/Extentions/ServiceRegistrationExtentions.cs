@@ -7,9 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using System.Reflection;
 using System.Text;
 using Techcore_Internship.Data.Authorization.Policies;
@@ -216,6 +216,7 @@ public static class ServiceRegistrationExtentions
             .WithMetrics(metrics =>
             {
                 metrics
+                    .AddRuntimeInstrumentation()
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddPrometheusExporter();

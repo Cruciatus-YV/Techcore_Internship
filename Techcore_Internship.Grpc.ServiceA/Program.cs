@@ -2,6 +2,7 @@ using MassTransit;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Prometheus;
 using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Grpc.ServiceA.Consumers;
 using Techcore_Internship.Grpc.ServiceA.Services;

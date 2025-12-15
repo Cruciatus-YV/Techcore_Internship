@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
+using Prometheus;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Context;
@@ -121,7 +122,6 @@ builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
 
 var app = builder.Build();
 
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseRequestLogging();
 app.UseGlobalExceptionHandler();
@@ -142,6 +142,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.MapControllers();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.MapHealthChecks("/healthz");
 
 // Database Initialization

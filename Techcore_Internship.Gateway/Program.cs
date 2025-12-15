@@ -1,5 +1,6 @@
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Prometheus;
 using System.Text.Json;
 using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Gateway.Aggregators;

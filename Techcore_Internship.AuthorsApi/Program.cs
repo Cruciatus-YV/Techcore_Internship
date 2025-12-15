@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Prometheus;
 using Techcore_Internship.AuthorsApi.Consumers;
 using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Data.Repositories;
@@ -132,7 +133,6 @@ builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
 var app = builder.Build();
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -146,5 +146,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.Run();
