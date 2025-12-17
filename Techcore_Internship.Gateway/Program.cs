@@ -1,12 +1,30 @@
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Prometheus;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using System.Text.Json;
 using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Gateway.Aggregators;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
+            labels: new[] {
+                new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
+                new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
+            });
+});
 
 bool isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" ||
                          Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "True";

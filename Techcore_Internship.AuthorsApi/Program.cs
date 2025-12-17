@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Prometheus;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using Techcore_Internship.AuthorsApi.Consumers;
 using Techcore_Internship.AuthorsApi.Data.Interfaces;
 using Techcore_Internship.AuthorsApi.Data.Repositories;
@@ -15,6 +16,23 @@ using Techcore_Internship.Data.Cache.Interfaces;
 using Techcore_Internship.Data.Utils.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
+            labels: new[] {
+                new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
+                new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
+            });
+});
 
 // Add services to the container.
 builder.Services.AddControllers();

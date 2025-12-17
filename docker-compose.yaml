@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: Techcore_Internship_Loki_Container
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    networks:
+      - app-network
+
   postgres:
     image: postgres:15
     container_name: Techcore_Internship_Postgres_Container
@@ -189,6 +199,8 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
     networks:
       - app-network
 
@@ -200,22 +212,19 @@ services:
     ports:
       - "5001:5001"
     environment:
-      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
-      # Database connections
       - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
-      # Message brokers
       - RabbitMQ__Host=rabbitmq
       - Kafka__BootstrapServers=kafka:9092
-      # OpenTelemetry
       - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
       - OpenTelemetry__ServiceName=BookService
       - OpenTelemetry__ServiceVersion=1.0.0
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - OTEL_SERVICE_NAME=BookService
+      - Loki__Address=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
@@ -229,6 +238,8 @@ services:
         condition: service_healthy
       zipkin:
         condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
       echo 'Waiting for dependencies...' &&
@@ -242,6 +253,10 @@ services:
       done &&
       until nc -z zipkin 9411; do 
         echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting application...' &&
@@ -258,20 +273,17 @@ services:
     ports:
       - "5002:5002"
     environment:
-      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5002
-      # Database connections
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
-      # Message brokers
       - RabbitMQ__Host=rabbitmq
-      # OpenTelemetry
       - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
       - OpenTelemetry__ServiceName=AuthorsApi
       - OpenTelemetry__ServiceVersion=1.0.0
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - OTEL_SERVICE_NAME=AuthorsApi
+      - Loki__Address=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
@@ -281,6 +293,8 @@ services:
         condition: service_healthy
       zipkin:
         condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
       echo 'Waiting for RabbitMQ to be fully ready...' &&
@@ -306,16 +320,15 @@ services:
     ports:
       - "5000:5000"
     environment:
-      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
       - DOTNET_RUNNING_IN_CONTAINER=true
-      # OpenTelemetry
       - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
       - OpenTelemetry__ServiceName=Gateway
       - OpenTelemetry__ServiceVersion=1.0.0
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - OTEL_SERVICE_NAME=Gateway
+      - Loki__Address=http://loki:3100
     depends_on:
       webapi:
         condition: service_started
@@ -323,6 +336,8 @@ services:
         condition: service_started
       zipkin:
         condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
       echo 'Waiting for dependencies...' &&
@@ -336,6 +351,10 @@ services:
       done &&
       until nc -z zipkin 9411; do 
         echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting Gateway...' &&
@@ -352,22 +371,22 @@ services:
     ports:
       - "5003:5003"
     environment:
-      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5003
-      # Message brokers
       - RabbitMQ__Host=rabbitmq
-      # OpenTelemetry
       - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
       - OpenTelemetry__ServiceName=GrpcServiceA
       - OpenTelemetry__ServiceVersion=1.0.0
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - OTEL_SERVICE_NAME=GrpcServiceA
+      - Loki__Address=http://loki:3100
     depends_on:
       rabbitmq:
         condition: service_healthy
       zipkin:
         condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
       echo 'Waiting for dependencies...' &&
@@ -377,6 +396,10 @@ services:
       done &&
       until nc -z zipkin 9411; do 
         echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting application...' &&
@@ -393,23 +416,23 @@ services:
     ports:
       - "5004:5004"
     environment:
-      # Application
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5004
-      # Message brokers
       - RabbitMQ__Host=rabbitmq
-      # OpenTelemetry
       - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
       - OpenTelemetry__ServiceName=GrpcServiceB
       - OpenTelemetry__ServiceVersion=1.0.0
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - OTEL_SERVICE_NAME=GrpcServiceB
+      - Loki__Address=http://loki:3100
     depends_on:
       rabbitmq:
         condition: service_healthy
       zipkin:
         condition: service_healthy
       grpc-service-a:
+        condition: service_started
+      loki:
         condition: service_started
     command: >
       sh -c "
@@ -424,6 +447,10 @@ services:
       done &&
       until nc -z zipkin 9411; do 
         echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting application...' &&

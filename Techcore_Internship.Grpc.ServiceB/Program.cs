@@ -2,12 +2,29 @@ using MassTransit;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Prometheus;
-using Techcore_Internship.Data.Utils.Extentions;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using Techcore_Internship.Grpc.ServiceB.Consumers;
 using Techcore_Internship.Grpc.ServiceB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
+            labels: new[] {
+                new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
+                new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
+            });
+});
 
 // OpenTelemetry
 var serviceName = "GrpcServiceB";

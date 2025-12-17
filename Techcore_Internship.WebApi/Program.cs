@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
-using Prometheus;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using Techcore_Internship.Application.Services;
 using Techcore_Internship.Application.Services.Background;
 using Techcore_Internship.Application.Services.Context;
@@ -29,6 +30,23 @@ using Techcore_Internship.Domain.Entities;
 using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
+            labels: new[] {
+                new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
+                new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
+            });
+});
 
 // Basic Services
 builder.Services.AddControllers();
