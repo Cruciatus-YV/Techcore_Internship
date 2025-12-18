@@ -191,6 +191,7 @@ public static class ServiceRegistrationExtentions
                 metrics
                     .AddMeter("BookService")
                     .AddMeter("MassTransit")
+                    .AddMeter("Polly")
                     .AddRuntimeInstrumentation()
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()

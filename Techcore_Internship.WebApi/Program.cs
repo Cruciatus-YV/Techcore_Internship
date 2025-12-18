@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
+using Polly;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
 using Techcore_Internship.Application.Services;
@@ -42,46 +43,52 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .WriteTo.Console()
         .WriteTo.GrafanaLoki(
             uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
-            labels: new[] {
+            labels: new[]
+            {
                 new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
                 new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
             });
 });
 
-// Basic Services
+// Basic services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Database
+// Database (PostgreSQL)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("Techcore_Internship_Postgres_Connection")
+    )
+);
 
-// Mongo
-builder.Services.AddSingleton<IMongoClient>(sp =>
+// MongoDB
+builder.Services.AddSingleton<IMongoClient>(_ =>
 {
     var connectionString = builder.Configuration.GetConnectionString("MongoDB");
     return new MongoClient(connectionString);
 });
 
 // Identity
-builder.Services.AddIdentity<ApplicationUserEntity, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUserEntity, IdentityRole>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// JWT Authentication
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+// Authentication / Authorization
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("JwtSettings")
+);
 builder.Services.AddCustomAuthentication(builder);
-
 builder.Services.AddCustomAuthorization();
 
 // Caching
 builder.Services.AddCustomRedis(builder);
 builder.Services.AddOutputCache();
 
-// MassTransit (RabbitMQ)
+// Messaging
 builder.Services.AddCustomMassTransit();
-
-// Kafka
 builder.Services.AddKafka();
 
 // OpenTelemetry
@@ -90,18 +97,23 @@ builder.Services.AddCustomOpenTelemetry(builder.Configuration);
 // Validation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblies(
-    AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName!.StartsWith("Techcore_Internship"))
+    AppDomain.CurrentDomain.GetAssemblies()
+        .Where(a => a.FullName!.StartsWith("Techcore_Internship"))
 );
 
-// Health Checks
+// Health checks
 builder.Services.AddHealthChecks();
 
-// Swagger with JWT
+// Swagger
 builder.Services.AddCustomSwaggerWithJwt();
 
 // App settings
-builder.Services.Configure<MySettings>(builder.Configuration.GetSection("MySettings"));
-builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("RedisSettings"));
+builder.Services.Configure<MySettings>(
+    builder.Configuration.GetSection("MySettings")
+);
+builder.Services.Configure<RedisSettings>(
+    builder.Configuration.GetSection("RedisSettings")
+);
 
 // Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
@@ -117,11 +129,9 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAuthorHttpService, AuthorHttpService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
-
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-
 builder.Services.AddScoped<OpenApiInformationService>();
 
 builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
@@ -130,16 +140,24 @@ builder.Services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
 builder.Services.AddHostedService<AverageRatingCalculatorService>();
 builder.Services.AddHostedService<KafkaConsumerService>();
 
-// HttpClient
-builder.Services.AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
-{
-    client.BaseAddress = new Uri("http://authorsapi:5002");
-})
-.AddPolicyHandler(PollyExtentions.GetPolicyWrap());
+// HttpClient + Polly
+builder.Services
+    .AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
+    {
+        client.BaseAddress = new Uri("http://authorsapi:5002");
+    })
+    .AddResilienceHandler(
+        "AuthorsApiPipeline",
+        (pipelineBuilder, _) =>
+        {
+            pipelineBuilder.AddPipeline(
+                PollyExtensions.GetResiliencePipeline()
+            );
+        });
 
 var app = builder.Build();
 
-
+// Middleware
 app.UseRequestLogging();
 app.UseGlobalExceptionHandler();
 
@@ -162,14 +180,14 @@ app.MapControllers();
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.MapHealthChecks("/healthz");
 
-// Database Initialization
+// Database initialization
 try
 {
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
 
     var dbContext = services.GetRequiredService<ApplicationDbContext>();
-    await dbContext.Database.CanConnectAsync();
+    await dbContext.Database.MigrateAsync();
 
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     await SeedRoles(roleManager);
@@ -178,12 +196,13 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Database initialization failed: {ex.Message}");
+    Console.WriteLine($"Database initialization failed: {ex}");
 }
 
 app.Run();
 
-async Task SeedRoles(RoleManager<IdentityRole> roleManager)
+// Helpers
+static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
 {
     string[] roleNames = { "User", "Admin", "SuperAdmin" };
 

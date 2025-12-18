@@ -1,52 +1,48 @@
 ﻿using Polly;
 using Polly.CircuitBreaker;
-using Polly.Extensions.Http;
-using Polly.Wrap;
-using System.Net;
-using System.Text;
-using System.Text.Json;
-using Techcore_Internship.Contracts.DTOs.Entities.Author.Responses;
+using Polly.Retry;
+using Polly.Timeout;
+using Polly.Simmy;
+using Polly.Simmy.Fault;
 
 namespace Techcore_Internship.Data.Utils.Extentions;
 
-public static class PollyExtentions
+public static class PollyExtensions
 {
-    public static AsyncPolicyWrap<HttpResponseMessage> GetPolicyWrap()
+    public static ResiliencePipeline<HttpResponseMessage> GetResiliencePipeline()
     {
-        var retryPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(1));
-
-        var circuitBreakerPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
-
-        var fallbackPolicy = Policy<HttpResponseMessage>
-            .Handle<BrokenCircuitException>()
-            .FallbackAsync(
-                fallbackAction: async (cancelationToken) =>
-                {
-                    var defaultAuthor = new AuthorResponse
-                    {
-                        Id = Guid.Empty,
-                        FirstName = "Unknown",
-                        LastName = "Author",
-                        Books = []
-                    };
-
-                    return new HttpResponseMessage(HttpStatusCode.OK)
-                    {
-                        Content = new StringContent(
-                            JsonSerializer.Serialize(defaultAuthor),
-                            Encoding.UTF8,
-                            "application/json")
-                    };
-                });
-
-        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(30);
-
-        var policyWrap = Policy.WrapAsync(fallbackPolicy, timeoutPolicy, circuitBreakerPolicy, retryPolicy);
-
-        return policyWrap;
+        return new ResiliencePipelineBuilder<HttpResponseMessage>()
+            .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+            {
+                Name = "http_retry",
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.FromSeconds(1),
+                BackoffType = DelayBackoffType.Constant,
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .Handle<HttpRequestException>()
+                    .HandleResult(r => (int)r.StatusCode >= 500)
+            })
+            .AddCircuitBreaker(new CircuitBreakerStrategyOptions<HttpResponseMessage>
+            {
+                Name = "http_circuit_breaker",
+                FailureRatio = 0.5,
+                SamplingDuration = TimeSpan.FromSeconds(10),
+                MinimumThroughput = 5,
+                BreakDuration = TimeSpan.FromSeconds(30),
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .Handle<HttpRequestException>()
+                    .HandleResult(r => (int)r.StatusCode >= 500)
+            })
+            .AddTimeout(TimeSpan.FromSeconds(30))
+            .AddChaosFault(new ChaosFaultStrategyOptions
+            {
+                Name = "chaos_fault",
+                Enabled = true,
+                InjectionRate = 0.05,
+                FaultGenerator = _ =>
+                    new ValueTask<Exception?>(
+                        new HttpRequestException("Simmy chaos fault"))
+            })
+            .Build();
     }
 }
