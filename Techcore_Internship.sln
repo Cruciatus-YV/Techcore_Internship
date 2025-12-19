@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11312.210 d18.3
+VisualStudioVersion = 18.3.11312.210
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.ConsoleApp", "Techcore_Internship.ConsoleApp.csproj", "{21387191-6340-487E-BE35-BF3604B7B156}"
 EndProject
@@ -37,7 +37,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.Gateway
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74AD-4CF2-AC5C-DDD7A3DA5F2B}"
 	ProjectSection(SolutionItems) = preProject
+		postgres-deployment.yml = postgres-deployment.yml
 		postgres-pvc.yml = postgres-pvc.yml
+		postgres-service.yml = postgres-service.yml
 	EndProjectSection
 EndProject
 Global
