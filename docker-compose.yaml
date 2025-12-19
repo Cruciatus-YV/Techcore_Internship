@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: Techcore_Internship_Loki_Container
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    networks:
+      - app-network
+
   postgres:
     image: postgres:15
     container_name: Techcore_Internship_Postgres_Container
@@ -53,11 +63,7 @@ services:
       - Mongo_Data:/data/db
       - Mongo_Config:/data/configdb
     healthcheck:
-      test: |
-        mongosh --eval "
-        db = db.getSiblingDB('admin');
-        db.auth('Cruciatus', '12345qwerty');
-        db.runCommand({ ping: 1 })"
+      test: ["CMD", "mongosh", "--eval", "db = db.getSiblingDB('admin'); db.auth('Cruciatus', '12345qwerty'); db.runCommand({ ping: 1 })"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -75,6 +81,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: Cruciatus
       RABBITMQ_DEFAULT_PASS: 12345qwerty
+      RABBITMQ_NODE_IP_ADDRESS: 0.0.0.0
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-proto_dist inet_tcp"
     volumes:
       - RabbitMQ_Data:/var/lib/rabbitmq
     healthcheck:
@@ -153,6 +161,49 @@ services:
     networks:
       - app-network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: Techcore_Internship_Prometheus_Container
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: Techcore_Internship_Grafana_Container
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - app-network
+
   webapi:
     build:
       context: .
@@ -168,6 +219,12 @@ services:
       - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
       - RabbitMQ__Host=rabbitmq
       - Kafka__BootstrapServers=kafka:9092
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=BookService
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=BookService
+      - Loki__Address=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,16 +236,27 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'Waiting for Kafka...' &&
       until nc -z kafka 9092; do 
         echo 'Kafka not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
         sleep 5 
       done &&
       echo 'All dependencies ready! Starting application...' &&
@@ -209,8 +277,13 @@ services:
       - ASPNETCORE_URLS=http://+:5002
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__Techcore_Internship_Postgres_Connection=Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty
-      - ConnectionStrings__MongoDB=mongodb://Cruciatus:12345qwerty@mongo:27017
       - RabbitMQ__Host=rabbitmq
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=AuthorsApi
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=AuthorsApi
+      - Loki__Address=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
@@ -218,15 +291,23 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
-      until nc -z rabbitmq 5672; do 
-        echo 'RabbitMQ not ready yet...' 
-        sleep 5 
+      echo 'Waiting for RabbitMQ to be fully ready...' &&
+      until rabbitmq-ready; do 
+        echo 'RabbitMQ not fully ready yet...' 
+        sleep 10 
+      done &&
+      until docker exec Techcore_Internship_RabbitMQ_Container rabbitmqctl await_startup 2>/dev/null; do
+        echo 'Waiting for RabbitMQ startup...'
+        sleep 10
       done &&
       echo 'RabbitMQ is ready! Starting application...' &&
-      sleep 10 &&
+      sleep 15 &&
       dotnet Techcore_Internship.AuthorsApi.dll"
     networks:
       - app-network
@@ -241,11 +322,44 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=Gateway
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=Gateway
+      - Loki__Address=http://loki:3100
     depends_on:
       webapi:
         condition: service_started
       authorsapi:
         condition: service_started
+      zipkin:
+        condition: service_healthy
+      loki:
+        condition: service_started
+    command: >
+      sh -c "
+      echo 'Waiting for dependencies...' &&
+      until nc -z webapi 5001; do 
+        echo 'WebApi not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z authorsapi 5002; do 
+        echo 'AuthorsApi not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting Gateway...' &&
+      sleep 10 &&
+      dotnet Techcore_Internship.Gateway.dll"
     networks:
       - app-network
 
@@ -260,17 +374,35 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5003
       - RabbitMQ__Host=rabbitmq
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=GrpcServiceA
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=GrpcServiceA
+      - Loki__Address=http://loki:3100
     depends_on:
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+      loki:
+        condition: service_started
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'RabbitMQ is ready! Starting application...' &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
       sleep 10 &&
       dotnet Techcore_Internship.Grpc.ServiceA.dll"
     networks:
@@ -287,17 +419,41 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5004
       - RabbitMQ__Host=rabbitmq
+      - Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - OpenTelemetry__ServiceName=GrpcServiceB
+      - OpenTelemetry__ServiceVersion=1.0.0
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_SERVICE_NAME=GrpcServiceB
+      - Loki__Address=http://loki:3100
     depends_on:
       rabbitmq:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+      grpc-service-a:
+        condition: service_started
+      loki:
+        condition: service_started
     command: >
       sh -c "
-      echo 'Waiting for RabbitMQ...' &&
+      echo 'Waiting for dependencies...' &&
       until nc -z rabbitmq 5672; do 
         echo 'RabbitMQ not ready yet...' 
         sleep 5 
       done &&
-      echo 'RabbitMQ is ready! Starting application...' &&
+      until nc -z grpc-service-a 5003; do 
+        echo 'gRPC Service A not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z zipkin 9411; do 
+        echo 'Zipkin not ready yet...' 
+        sleep 5 
+      done &&
+      until nc -z loki 3100; do 
+        echo 'Loki not ready yet...' 
+        sleep 5 
+      done &&
+      echo 'All dependencies ready! Starting application...' &&
       sleep 10 &&
       dotnet Techcore_Internship.Grpc.ServiceB.dll"
     networks:
@@ -312,6 +468,8 @@ volumes:
   Zookeeper_Data:
   Zookeeper_Log:
   Kafka_Data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   app-network:

@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Techcore_Internship.Data.Authorization.Policies;
 using Techcore_Internship.Application.Services.Interfaces;
+using Techcore_Internship.Contracts.Configurations;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Requests;
 using Techcore_Internship.Contracts.DTOs.Entities.Book.Responses;
-using Techcore_Internship.Contracts.Configurations;
+using Techcore_Internship.Data.Authorization.Policies;
+using Techcore_Internship.WebApi.Metrics;
 
 namespace Techcore_Internship.WebApi.Controllers;
 
@@ -213,6 +214,7 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateBookRequest request, CancellationToken cancellationToken = default)
     {
         var newBook = await _bookService.CreateAsync(request, cancellationToken);
+        BookMetrics.BookCreatedCounter.Add(1);
         return Ok(newBook);
     }
 
@@ -227,6 +229,7 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> CreateWithAuthors([FromBody] CreateBookWithAuthorsRequest request, CancellationToken cancellationToken = default)
     {
         var bookId = await _bookService.CreateWithAuthorsAsync(request, cancellationToken);
+        BookMetrics.BookCreatedCounter.Add(1);
         return Ok(bookId);
     }
 

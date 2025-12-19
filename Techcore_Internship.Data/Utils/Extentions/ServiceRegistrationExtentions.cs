@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Confluent.Kafka.Extensions.OpenTelemetry;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -6,7 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using System.Reflection;
 using System.Text;
 using Techcore_Internship.Data.Authorization.Policies;
@@ -159,19 +162,42 @@ public static class ServiceRegistrationExtentions
         return services;
     }
 
-    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services)
+    public static IServiceCollection AddCustomOpenTelemetry(this IServiceCollection services, IConfiguration configuration)
     {
+        var serviceName = configuration["OpenTelemetry:ServiceName"] ?? "BookService";
+        var serviceVersion = configuration["OpenTelemetry:ServiceVersion"] ?? "1.0.0";
+        var zipkinEndpoint = configuration["Zipkin:Endpoint"] ?? "http://zipkin:9411/api/v2/spans";
+
         services.AddOpenTelemetry()
-        .WithTracing(tracing =>
-        {
-            tracing.AddZipkinExporter(options =>
+            .ConfigureResource(resource => resource
+                .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.ToLowerInvariant() ?? "development",
+                }))
+            .WithTracing(tracing =>
             {
-                options.Endpoint = new Uri("http://zipkin:9411/api/v2/spans");
+                tracing
+                    .AddSource(serviceName)
+                    .AddSource("MassTransit")
+                    .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
+                    .AddHttpClientInstrumentation(options => { options.RecordException = true; })
+                    .AddEntityFrameworkCoreInstrumentation(options => { options.SetDbStatementForText = true; })
+                    .AddConfluentKafkaInstrumentation()
+                    .AddZipkinExporter(zipkinOptions => { zipkinOptions.Endpoint = new Uri(zipkinEndpoint); });
             })
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddEntityFrameworkCoreInstrumentation();
-        });
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddMeter("BookService")
+                    .AddMeter("MassTransit")
+                    .AddMeter("Polly")
+                    .AddRuntimeInstrumentation()
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddPrometheusExporter();
+            });
+
         return services;
     }
 }

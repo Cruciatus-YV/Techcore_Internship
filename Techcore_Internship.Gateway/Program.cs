@@ -1,8 +1,30 @@
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using System.Text.Json;
 using Techcore_Internship.Data.Utils.Extentions;
 using Techcore_Internship.Gateway.Aggregators;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            uri: context.Configuration["Loki:Address"] ?? "http://localhost:3100",
+            labels: new[] {
+                new LokiLabel { Key = "app", Value = context.HostingEnvironment.ApplicationName },
+                new LokiLabel { Key = "environment", Value = context.HostingEnvironment.EnvironmentName }
+            });
+});
 
 bool isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" ||
                          Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "True";
@@ -18,6 +40,57 @@ builder.Configuration
     .AddJsonFile(configFile, optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+// OpenTelemetry
+var serviceName = "Gateway";
+var serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName.ToLowerInvariant(),
+            ["service.type"] = "api-gateway"
+        }))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddSource(serviceName)
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+                options.EnrichWithHttpRequest = (activity, request) =>
+                {
+                    activity.SetTag("http.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
+                    activity.SetTag("http.user_agent", request.Headers.UserAgent.ToString());
+                    activity.SetTag("gateway.route", request.Path);
+                };
+            })
+            .AddHttpClientInstrumentation(options =>
+            {
+                options.RecordException = true;
+                options.EnrichWithHttpRequestMessage = (activity, request) =>
+                {
+                    activity.SetTag("proxy.target", request.RequestUri?.Host);
+                    activity.SetTag("proxy.path", request.RequestUri?.PathAndQuery);
+                };
+            })
+            .AddZipkinExporter(zipkinOptions =>
+            {
+                zipkinOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Zipkin:Endpoint")
+                    ?? "http://zipkin:9411/api/v2/spans");
+            });
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter(serviceName)
+            .AddRuntimeInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
+    });
+
 builder.Services.AddHttpClient();
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -28,7 +101,7 @@ builder.Services.AddCustomAuthentication(builder);
 builder.Services.AddCustomAuthorization();
 
 var app = builder.Build();
-
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.UseAuthentication();
 app.UseAuthorization();
 
