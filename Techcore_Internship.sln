@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11312.210
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.ConsoleApp", "Techcore_Internship.ConsoleApp.csproj", "{21387191-6340-487E-BE35-BF3604B7B156}"
 EndProject
@@ -18,6 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yaml = docker-compose.yaml
+		import_books.sql = import_books.sql
 		prometheus.yml = prometheus.yml
 	EndProjectSection
 EndProject
@@ -34,6 +35,27 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.Grpc.ServiceB", "Techcore_Internship.Grpc.ServiceB\Techcore_Internship.Grpc.ServiceB.csproj", "{EB380C0B-6547-40A6-9590-C1616A1DF1C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.Gateway", "Techcore_Internship.Gateway\Techcore_Internship.Gateway.csproj", "{B249A36A-7660-460A-A225-708D9F962688}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74AD-4CF2-AC5C-DDD7A3DA5F2B}"
+	ProjectSection(SolutionItems) = preProject
+		appsettings.k8s.json = appsettings.k8s.json
+		authors-api-deployment.yaml = authors-api-deployment.yaml
+		authors-api-service.yaml = authors-api-service.yaml
+		kafka-deployment-wurstmeister.yaml = kafka-deployment-wurstmeister.yaml
+		kafka-service-wurstmeister.yaml = kafka-service-wurstmeister.yaml
+		loki-deployment.yaml = loki-deployment.yaml
+		mongo-deployment.yml = mongo-deployment.yml
+		postgres-deployment.yml = postgres-deployment.yml
+		postgres-pvc.yml = postgres-pvc.yml
+		postgres-service.yml = postgres-service.yml
+		rabbitmq-deployment.yml = rabbitmq-deployment.yml
+		redis-deployment.yml = redis-deployment.yml
+		web-api-deployment.yaml = web-api-deployment.yaml
+		web-api-service.yaml = web-api-service.yaml
+		zipkin-deployment.yml = zipkin-deployment.yml
+		zookeeper-deployment.yaml = zookeeper-deployment.yaml
+		zookeeper-service.yaml = zookeeper-service.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -195,6 +217,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2523975E-FABF-49E8-A488-9CE30BC03263} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{923264B7-74AD-4CF2-AC5C-DDD7A3DA5F2B} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {707183C7-5239-4D96-AA50-8A3C8D62BF3A}

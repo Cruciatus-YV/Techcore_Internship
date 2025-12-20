@@ -32,6 +32,11 @@ using Techcore_Internship.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5001);
+});
+
 // Serilog
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -161,7 +166,7 @@ var app = builder.Build();
 app.UseRequestLogging();
 app.UseGlobalExceptionHandler();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();

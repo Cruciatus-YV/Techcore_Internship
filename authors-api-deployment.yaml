@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authors-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authors-api
+  template:
+    metadata:
+      labels:
+        app: authors-api
+    spec:
+      containers:
+      - name: authors-api
+        image: authors-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5002
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        - name: Loki__Address
+          value: http://loki:3100
+        - name: Zipkin__Endpoint
+          value: http://zipkin:9411/api/v2/spans

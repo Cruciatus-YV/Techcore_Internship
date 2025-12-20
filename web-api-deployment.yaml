@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-api
+  namespace: techcore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-api
+  template:
+    metadata:
+      labels:
+        app: web-api
+    spec:
+      containers:
+      - name: web-api
+        image: web-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5001
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+        - name: ASPNETCORE_URLS
+          value: "http://+:5001"
+        - name: AuthorsApi__BaseUrl
+          value: "http://authors-api:5002"
+        - name: ConnectionStrings__Techcore_Internship_Postgres_Connection
+          value: "Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty"
+        - name: ConnectionStrings__Redis
+          value: "redis:6379"
+        - name: ConnectionStrings__MongoDB
+          value: "mongodb://Cruciatus:12345qwerty@mongo:27017"
+        - name: RabbitMQ__Host
+          value: "rabbitmq"
+        - name: RabbitMQ__Port
+          value: "5672"
+        - name: RabbitMQ__Username
+          value: "Cruciatus"
+        - name: RabbitMQ__Password
+          value: "12345qwerty"
+        - name: Kafka__BootstrapServers
+          value: "kafka:9092"
+        - name: Loki__Address
+          value: "http://loki:3100" 
+        - name: Zipkin__Endpoint
+          value: "http://zipkin:9411/api/v2/spans"
+        - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
+          value: "http://zipkin:9411/api/v2/spans"
+        - name: OTEL_SERVICE_NAME
+          value: "BookService"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-api
+  namespace: techcore
+spec:
+  selector:
+    app: web-api
+  ports:
+  - port: 80
+    targetPort: 5001
+    nodePort: 30001
+  type: NodePort

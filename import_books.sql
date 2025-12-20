@@ -1,0 +1,80 @@
+DELETE FROM "AuthorEntityBookEntity";
+DELETE FROM "Books";
+DELETE FROM "Authors";
+
+-- Авторы
+INSERT INTO "Authors" ("Id", "FirstName", "LastName", "IsDeleted") VALUES
+('607cbd1b-ac9e-49cb-ac92-43123ca96cd1', 'Isaac', 'Asimov', false),
+('e165f5e3-deaf-4d52-b6a2-0fef109ed61d', 'Roger', 'Zelazny', false),
+('7cdf7809-0020-4841-a5ac-c4ac6f9a70e6', 'John', 'Tolkien', false),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', 'Joanne', 'Rowling', false),
+('e8ceae1b-4f70-4c3b-b5b6-8e5f69e8ee9c', 'Ursula', 'Le Guin', false),
+('2d003821-fba7-4d58-b34f-cec956fa0b59', 'Michael', 'Storm', false),
+('22a3f211-c166-4978-af05-e765fbf2b5ea', 'William', 'Gibson', false),
+('fff09a3d-5da0-4c98-baa7-45860823bc25', 'Victoria', 'Stone', false),
+('cd8623d4-0e91-406a-aea1-a294262cefc7', 'Frank', 'Herbert', false),
+('3503edf4-3876-4e84-81c7-e2db25e06c34', 'Patrick', 'Rothfuss', false),
+('9645da05-b19e-4a12-a0d0-797ba68895f9', 'Ray', 'Bradbury', false),
+('f8e0e28f-85b5-46a0-99b0-b85d4d8c55e0', 'George', 'Orwell', false);
+
+-- Книги
+INSERT INTO "Books" ("Id", "Title", "Year", "IsDeleted") VALUES
+('0ecd5bbc-3361-493f-b8d8-d2f9c6297453', 'Foundation', 1951, false),
+('16ad954e-7b64-48bf-a4c4-722ce9165b47', 'Nine Princes in Amber', 1970, false),
+('31cacc4f-8e1f-4924-bcfe-fbc26f79fb4b', 'The Hobbit', 1937, false),
+('35221fd6-83d9-4905-bfca-f3d6ba0c4b7e', 'Harry Potter and the Order of the Phoenix', 2003, false),
+('50df96b9-122e-4796-a835-5956abec4b16', 'The Left Hand of Darkness', 1969, false),
+('5460c821-3257-46a9-9d10-cb8a370da7d4', 'The Silent Echo', 1964, false),
+('58462fc0-d419-4660-b2cf-b87b2f9e3446', 'Count Zero', 1986, false),
+('5bea8dfa-1ce4-4f4c-9955-d681489577da', 'Garden of Glass', 1930, false),
+('5f025db6-3089-47cb-8309-10dfde2dd2b2', 'Dune', 1965, false),
+('60837a64-e317-443e-bf2a-74a0af8c8d10', 'Harry Potter and the Deathly Hallows', 2007, false),
+('6087ec00-b8d5-4e7b-a3a0-063ba23fd5df', 'Harry Potter and the Goblet of Fire', 2000, false),
+('6331174e-6771-4a3b-935e-96ebf22ac1ad', 'Whispers in the Dark', 1972, false),
+('63b194f1-8a41-4dbe-931f-c4159c607e1f', 'Harry Potter and the Half-Blood Prince', 2005, false),
+('64f50221-4537-4138-833d-486639dab9b6', 'I, Robot', 1950, false),
+('6660e454-d472-4802-8eb7-5e2683a6decd', 'The Name of the Wind', 2007, false),
+('73121e8f-8a18-452d-a59e-d1171661b221', 'Harry Potter and the Chamber of Secrets', 1998, false),
+('798a687b-1e37-45ae-9e90-283e251d986d', 'Dune Messiah', 1969, false),
+('7f5859c2-72e1-4a08-9aa9-e14b0e0d832f', 'Harry Potter and the Goblet of Fire', 2000, false),
+('7ffc2152-4b03-4f1f-a1a1-ffc8b893e53b', 'The Lord of the Rings', 1954, false),
+('8c79a138-e644-4e28-8251-0a16659cbdf5', 'Harry Potter and the Philosopher''s Stone', 1997, false),
+('a2c74b79-bd8f-4f91-802c-bb3061eaa27a', 'Chronicles of Amber', 1970, false),
+('af6f80c5-c54a-4bc2-9746-14b43f66d78e', 'Fahrenheit 451', 1953, false),
+('b6de4e57-0451-454f-9212-6a68c06a5207', 'Neuromancer', 1984, false),
+('cf1a9fbd-9eee-4299-98a9-cd133b3fd27a', '1984', 1949, false),
+('d9e18d58-adc2-4640-96fa-7b33f8ee54bb', 'The Dispossessed', 1974, false),
+('d9ec8d91-e208-495f-b740-414553c96b18', 'Animal Farm', 1945, false),
+('ea1bf0b0-4184-450c-aee1-f4c37c609398', 'The Martian Chronicles', 1950, false),
+('f5a8f493-564a-42a3-a4ca-280328a5d551', 'Crystal Memories', 1935, false);
+
+-- Связи книга-автор
+INSERT INTO "AuthorEntityBookEntity" ("AuthorsId", "BooksId") VALUES
+('607cbd1b-ac9e-49cb-ac92-43123ca96cd1', '0ecd5bbc-3361-493f-b8d8-d2f9c6297453'),
+('e165f5e3-deaf-4d52-b6a2-0fef109ed61d', '16ad954e-7b64-48bf-a4c4-722ce9165b47'),
+('7cdf7809-0020-4841-a5ac-c4ac6f9a70e6', '31cacc4f-8e1f-4924-bcfe-fbc26f79fb4b'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '35221fd6-83d9-4905-bfca-f3d6ba0c4b7e'),
+('e8ceae1b-4f70-4c3b-b5b6-8e5f69e8ee9c', '50df96b9-122e-4796-a835-5956abec4b16'),
+('2d003821-fba7-4d58-b34f-cec956fa0b59', '5460c821-3257-46a9-9d10-cb8a370da7d4'),
+('22a3f211-c166-4978-af05-e765fbf2b5ea', '58462fc0-d419-4660-b2cf-b87b2f9e3446'),
+('fff09a3d-5da0-4c98-baa7-45860823bc25', '5bea8dfa-1ce4-4f4c-9955-d681489577da'),
+('cd8623d4-0e91-406a-aea1-a294262cefc7', '5f025db6-3089-47cb-8309-10dfde2dd2b2'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '60837a64-e317-443e-bf2a-74a0af8c8d10'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '6087ec00-b8d5-4e7b-a3a0-063ba23fd5df'),
+('2d003821-fba7-4d58-b34f-cec956fa0b59', '6331174e-6771-4a3b-935e-96ebf22ac1ad'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '63b194f1-8a41-4dbe-931f-c4159c607e1f'),
+('607cbd1b-ac9e-49cb-ac92-43123ca96cd1', '64f50221-4537-4138-833d-486639dab9b6'),
+('3503edf4-3876-4e84-81c7-e2db25e06c34', '6660e454-d472-4802-8eb7-5e2683a6decd'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '73121e8f-8a18-452d-a59e-d1171661b221'),
+('cd8623d4-0e91-406a-aea1-a294262cefc7', '798a687b-1e37-45ae-9e90-283e251d986d'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '7f5859c2-72e1-4a08-9aa9-e14b0e0d832f'),
+('7cdf7809-0020-4841-a5ac-c4ac6f9a70e6', '7ffc2152-4b03-4f1f-a1a1-ffc8b893e53b'),
+('035d4989-c403-4406-ad4d-15d53e1c0e59', '8c79a138-e644-4e28-8251-0a16659cbdf5'),
+('e165f5e3-deaf-4d52-b6a2-0fef109ed61d', 'a2c74b79-bd8f-4f91-802c-bb3061eaa27a'),
+('9645da05-b19e-4a12-a0d0-797ba68895f9', 'af6f80c5-c54a-4bc2-9746-14b43f66d78e'),
+('22a3f211-c166-4978-af05-e765fbf2b5ea', 'b6de4e57-0451-454f-9212-6a68c06a5207'),
+('f8e0e28f-85b5-46a0-99b0-b85d4d8c55e0', 'cf1a9fbd-9eee-4299-98a9-cd133b3fd27a'),
+('e8ceae1b-4f70-4c3b-b5b6-8e5f69e8ee9c', 'd9e18d58-adc2-4640-96fa-7b33f8ee54bb'),
+('f8e0e28f-85b5-46a0-99b0-b85d4d8c55e0', 'd9ec8d91-e208-495f-b740-414553c96b18'),
+('9645da05-b19e-4a12-a0d0-797ba68895f9', 'ea1bf0b0-4184-450c-aee1-f4c37c609398'),
+('fff09a3d-5da0-4c98-baa7-45860823bc25', 'f5a8f493-564a-42a3-a4ca-280328a5d551');
