@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  namespace: techcore
 spec:
   replicas: 1
   selector:
@@ -36,6 +37,16 @@ spec:
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - Cruciatus
+            - -d
+            - Techcore_Internship_Postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:

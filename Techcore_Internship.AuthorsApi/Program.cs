@@ -17,6 +17,11 @@ using Techcore_Internship.Data.Utils.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5002);
+});
+
 // Serilog
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -152,7 +157,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
