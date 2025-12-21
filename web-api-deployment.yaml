@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-api
-  namespace: techcore
 spec:
   replicas: 1
   selector:
@@ -15,47 +14,57 @@ spec:
     spec:
       containers:
       - name: web-api
-        image: web-api:latest
+        image: bookservice:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5001
         env:
         - name: ASPNETCORE_ENVIRONMENT
-          value: "Development"
+          value: "Production"
         - name: ASPNETCORE_URLS
           value: "http://+:5001"
-        - name: AuthorsApi__BaseUrl
-          value: "http://authors-api:5002"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: postgres-password
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: mongo-password
         - name: ConnectionStrings__Techcore_Internship_Postgres_Connection
-          value: "Host=postgres;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=12345qwerty"
+          value: "Host=postgresql;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=$(POSTGRES_PASSWORD)"
         - name: ConnectionStrings__Redis
           value: "redis:6379"
         - name: ConnectionStrings__MongoDB
-          value: "mongodb://Cruciatus:12345qwerty@mongo:27017"
+          value: "mongodb://Cruciatus:$(MONGO_PASSWORD)@mongo:27017"
         - name: RabbitMQ__Host
           value: "rabbitmq"
-        - name: RabbitMQ__Port
-          value: "5672"
-        - name: RabbitMQ__Username
-          value: "Cruciatus"
-        - name: RabbitMQ__Password
-          value: "12345qwerty"
         - name: Kafka__BootstrapServers
           value: "kafka:9092"
-        - name: Loki__Address
-          value: "http://loki:3100" 
         - name: Zipkin__Endpoint
           value: "http://zipkin:9411/api/v2/spans"
+        - name: Loki__Address
+          value: "http://loki:3100"
         - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
           value: "http://zipkin:9411/api/v2/spans"
         - name: OTEL_SERVICE_NAME
           value: "BookService"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        command: ["dotnet", "Techcore_Internship.WebApi.dll"]
+      volumes:
+      - name: config-volume
+        configMap:
+          name: bookservice-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: web-api
-  namespace: techcore
 spec:
   selector:
     app: web-api

@@ -29,4 +29,5 @@ RUN dotnet publish "./Techcore_Internship.WebApi.csproj" -c $BUILD_CONFIGURATION
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY appsettings.k8s.json appsettings.json
 ENTRYPOINT ["dotnet", "Techcore_Internship.WebApi.dll"]
