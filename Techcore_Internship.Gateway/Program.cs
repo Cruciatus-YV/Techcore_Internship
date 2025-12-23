@@ -29,7 +29,27 @@ builder.Host.UseSerilog((context, services, configuration) =>
 bool isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" ||
                          Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "True";
 
-string configFile = isRunningInDocker ? "yarp.docker.json" : "yarp.local.json";
+// После существующей проверки isRunningInDocker
+bool isRunningInKubernetes = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST") != null;
+
+string configFile;
+if (isRunningInKubernetes)
+{
+    configFile = "yarp.k8s.json";
+    Console.WriteLine("Running in Kubernetes mode");
+    // Добавляем конфигурацию из ConfigMap
+    builder.Configuration.AddJsonFile("/app/config/yarp.json", optional: false, reloadOnChange: true);
+}
+else if (isRunningInDocker)
+{
+    configFile = "yarp.docker.json";
+    Console.WriteLine("Running in Docker mode");
+}
+else
+{
+    configFile = "yarp.local.json";
+    Console.WriteLine("Running in local mode");
+}
 
 Console.WriteLine($"Using configuration: {configFile}");
 Console.WriteLine($"Running in Docker: {isRunningInDocker}");

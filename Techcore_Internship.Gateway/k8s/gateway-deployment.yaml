@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: gateway:1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+          name: http
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: DOTNET_RUNNING_IN_CONTAINER
+          value: "true"
+        - name: KUBERNETES_SERVICE_HOST
+          value: "kubernetes.default.svc"
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: gateway-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: NodePort
+  selector:
+    app: gateway
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+    nodePort: 30002

@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+data:
+  yarp.json: |
+    {
+      "ReverseProxy": {
+        "Routes": {
+          "authors": {
+            "ClusterId": "authorsapi-cluster",
+            "Match": {
+              "Path": "/api/authors/{**catch-all}"
+            },
+            "Order": 1
+          },
+          "auth": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/auth/{**catch-all}",
+              "Methods": [ "POST" ]
+            },
+            "Transforms": [
+              { "PathPattern": "/api/Auth/{**catch-all}" }
+            ],
+            "Order": 1
+          },
+          "books-get": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/books/{id}",
+              "Methods": [ "GET" ]
+            },
+            "Transforms": [
+              { "PathPattern": "/api/Books/{id}" }
+            ],
+            "Order": 1
+          },
+          "books-delete": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/books/{id}",
+              "Methods": [ "DELETE" ]
+            },
+            "Transforms": [
+              { "PathPattern": "/api/Books/{id}" }
+            ],
+            "Order": 1
+          },
+          "reviews-get": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/reviews/book/{id}",
+              "Methods": [ "GET" ]
+            },
+            "Transforms": [
+              { "PathPattern": "/api/ProductReviews/product/{id}" }
+            ],
+            "Order": 1
+          },
+          "roles": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/roles/{**catch-all}"
+            },
+            "Transforms": [
+              { "PathPattern": "/api/roles/{**catch-all}" }
+            ],
+            "Order": 1
+          },
+          "api-all": {
+            "ClusterId": "webapi-cluster",
+            "Match": {
+              "Path": "/api/{**catch-all}"
+            },
+            "Transforms": [
+              { "PathPattern": "/api/{**catch-all}" }
+            ],
+            "Order": 999 
+          }
+        },
+        "Clusters": {
+          "webapi-cluster": {
+            "Destinations": {
+              "webapi": {
+                "Address": "http://web-api/"
+              }
+            }
+          },
+          "authorsapi-cluster": {
+            "Destinations": {
+              "authorsapi": {
+                "Address": "http://authorsapi/"
+              }
+            }
+          }
+        }
+      }
+    }

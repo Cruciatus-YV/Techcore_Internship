@@ -6,3 +6,4 @@ data:
   MySettings__Version: "1.0.0-k8s"
   MySettings__Author: "Yura Voronkin (K8s)"
   Logging__LogLevel__Default: "Information"
+  AuthorsApi__BaseUrl: "http://authorsapi:5002"

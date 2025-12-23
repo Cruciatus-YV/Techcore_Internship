@@ -39,8 +39,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74AD-4CF2-AC5C-DDD7A3DA5F2B}"
 	ProjectSection(SolutionItems) = preProject
 		appsettings.k8s.json = appsettings.k8s.json
-		authors-api-deployment.yaml = authors-api-deployment.yaml
-		authors-api-service.yaml = authors-api-service.yaml
+		authorsapi-deployment.yaml = authorsapi-deployment.yaml
 		configmap-bookservice.yaml = configmap-bookservice.yaml
 		kafka-deployment-wurstmeister.yaml = kafka-deployment-wurstmeister.yaml
 		kafka-service-wurstmeister.yaml = kafka-service-wurstmeister.yaml
@@ -53,7 +52,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74A
 		redis-deployment.yml = redis-deployment.yml
 		secret-app.yaml = secret-app.yaml
 		web-api-deployment.yaml = web-api-deployment.yaml
-		web-api-service.yaml = web-api-service.yaml
 		zipkin-deployment.yml = zipkin-deployment.yml
 		zookeeper-deployment.yaml = zookeeper-deployment.yaml
 		zookeeper-service.yaml = zookeeper-service.yaml

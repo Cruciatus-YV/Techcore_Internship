@@ -1,48 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-api
+  name: authorsapi
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web-api
+      app: authorsapi
   template:
     metadata:
       labels:
-        app: web-api
+        app: authorsapi
     spec:
       containers:
-      - name: web-api
-        image: bookservice:latest
+      - name: authorsapi
+        image: authorsapi:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 5001
+        - containerPort: 5002
         env:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Production"
         - name: ASPNETCORE_URLS
-          value: "http://+:5001"
+          value: "http://+:5002"
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: app-secrets
               key: postgres-password
-        - name: MONGO_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mongo-password
         - name: ConnectionStrings__Techcore_Internship_Postgres_Connection
           value: "Host=postgresql;Database=Techcore_Internship_Postgres;Username=Cruciatus;Password=$(POSTGRES_PASSWORD)"
         - name: ConnectionStrings__Redis
           value: "redis-master:6379"
-        - name: ConnectionStrings__MongoDB
-          value: "mongodb://Cruciatus:$(MONGO_PASSWORD)@mongodb:27017/Techcore_Internship_Mongo"
         - name: RabbitMQ__Host
           value: "rabbitmq"
-        - name: Kafka__BootstrapServers
-          value: "kafka:9092"
         - name: Zipkin__Endpoint
           value: "http://zipkin:9411/api/v2/spans"
         - name: Loki__Address
@@ -50,12 +41,12 @@ spec:
         - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
           value: "http://zipkin:9411/api/v2/spans"
         - name: OTEL_SERVICE_NAME
-          value: "BookService"
+          value: "AuthorsApi"
         volumeMounts:
         - name: config-volume
           mountPath: /app/config
           readOnly: true
-        command: ["dotnet", "Techcore_Internship.WebApi.dll"]
+        command: ["dotnet", "Techcore_Internship.AuthorsApi.dll"]
       volumes:
       - name: config-volume
         configMap:
@@ -64,12 +55,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-api
+  name: authorsapi
 spec:
   selector:
-    app: web-api
+    app: authorsapi
   ports:
   - port: 80
-    targetPort: 5001
-    nodePort: 30001
-  type: NodePort
+    targetPort: 5002
+  type: ClusterIP
