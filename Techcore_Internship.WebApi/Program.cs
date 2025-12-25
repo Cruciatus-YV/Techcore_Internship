@@ -171,7 +171,7 @@ builder.Services.AddHostedService<KafkaConsumerService>();
 builder.Services
     .AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
     {
-        client.BaseAddress = new Uri("http://authorsapi:5002");
+        client.BaseAddress = new Uri(builder.Configuration["AuthorsApi:BaseUrl"]);
     })
     .AddResilienceHandler(
         "AuthorsApiPipeline",

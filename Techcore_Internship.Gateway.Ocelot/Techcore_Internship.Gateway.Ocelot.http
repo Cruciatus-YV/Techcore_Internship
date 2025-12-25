@@ -1,0 +1,6 @@
+@Techcore_Internship.Gateway.Ocelot_HostAddress = http://localhost:5037
+
+GET {{Techcore_Internship.Gateway.Ocelot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
