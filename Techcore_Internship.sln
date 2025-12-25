@@ -40,6 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74A
 	ProjectSection(SolutionItems) = preProject
 		authorsapi-deployment.yaml = authorsapi-deployment.yaml
 		configmap-bookservice.yaml = configmap-bookservice.yaml
+		ingress.yml = ingress.yml
 		kafka-deployment-wurstmeister.yaml = kafka-deployment-wurstmeister.yaml
 		kafka-service-wurstmeister.yaml = kafka-service-wurstmeister.yaml
 		loki-deployment.yaml = loki-deployment.yaml
