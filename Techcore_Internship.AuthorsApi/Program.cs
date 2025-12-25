@@ -168,7 +168,11 @@ builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
+// health checks
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -182,5 +186,9 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// health check endpoint
+app.MapHealthChecks("/healthz");
+
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.Run();
