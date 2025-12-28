@@ -189,7 +189,7 @@ public static class ServiceRegistrationExtentions
             .WithMetrics(metrics =>
             {
                 metrics
-                    .AddMeter("BookService")
+                    .AddMeter(serviceName)
                     .AddMeter("MassTransit")
                     .AddMeter("Polly")
                     .AddRuntimeInstrumentation()

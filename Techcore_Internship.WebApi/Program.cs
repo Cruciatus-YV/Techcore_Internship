@@ -204,7 +204,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.MapControllers();
-app.UseOpenTelemetryPrometheusScrapingEndpoint();
+app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics");
 app.MapHealthChecks("/healthz");
 
 // Database initialization

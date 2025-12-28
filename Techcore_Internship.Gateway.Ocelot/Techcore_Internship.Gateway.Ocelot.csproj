@@ -21,4 +21,8 @@
 	  <PackageReference Include="Ocelot.Provider.Kubernetes" Version="24.1.0-beta.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Techcore_Internship.Data\Techcore_Internship.Data.csproj" />
+	</ItemGroup>
+
 </Project>
