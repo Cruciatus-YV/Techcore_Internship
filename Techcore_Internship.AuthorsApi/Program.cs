@@ -22,6 +22,28 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(5002);
 });
 
+string configPath = "/app/config";
+
+if (Directory.Exists(configPath))
+{
+    foreach (var file in Directory.GetFiles(configPath))
+    {
+        var key = Path.GetFileName(file);
+        var value = File.ReadAllText(file).Trim();
+
+        builder.Configuration.AddInMemoryCollection(new[]
+        {
+            new KeyValuePair<string, string>(key.Replace("__", ":"), value)
+        });
+
+        Console.WriteLine($"Loaded config from file: {key} = {value}");
+    }
+}
+else
+{
+    Console.WriteLine($"Config path not found: {configPath}. Running with default configuration.");
+}
+
 // Serilog
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -146,7 +168,11 @@ builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
+// health checks
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -160,5 +186,9 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// health check endpoint
+app.MapHealthChecks("/healthz");
+
 app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.Run();

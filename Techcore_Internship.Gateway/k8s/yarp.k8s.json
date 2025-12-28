@@ -1,0 +1,47 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "books-route": {
+        "ClusterId": "books-cluster",
+        "Match": {
+          "Path": "/api/books/{**catch-all}"
+        }
+      },
+      "authors-route": {
+        "ClusterId": "authors-cluster",
+        "Match": {
+          "Path": "/api/authors/{**catch-all}"
+        }
+      },
+      "health-route": {
+        "ClusterId": "self-cluster",
+        "Match": {
+          "Path": "/health"
+        }
+      }
+    },
+    "Clusters": {
+      "books-cluster": {
+        "Destinations": {
+          "books-destination": {
+            "Address": "http://web-api/"
+          }
+        }
+      },
+      "authors-cluster": {
+        "Destinations": {
+          "authors-destination": {
+            "Address": "http://authorsapi/"
+          }
+        }
+      },
+      "self-cluster": {
+        "Destinations": {
+          "self": {
+            "Address": "http://localhost/"
+          }
+        }
+      }
+    }
+  }
+}

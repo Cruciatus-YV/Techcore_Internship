@@ -22,8 +22,11 @@ RUN dotnet publish "./Techcore_Internship.Gateway.csproj" -c $BUILD_CONFIGURATIO
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN mkdir -p /app/config
 COPY ["Techcore_Internship.Gateway/yarp.local.json", "./"]
 COPY ["Techcore_Internship.Gateway/yarp.docker.json", "./"]
+COPY ["Techcore_Internship.Gateway/k8s/yarp.k8s.json", "./yarp.k8s.json"]
 COPY ["Techcore_Internship.Gateway/appsettings.json", "./"]
 COPY ["Techcore_Internship.Gateway/appsettings.Development.json", "./"]
+ENV ASPNETCORE_URLS=http://+:5000
 ENTRYPOINT ["dotnet", "Techcore_Internship.Gateway.dll"]

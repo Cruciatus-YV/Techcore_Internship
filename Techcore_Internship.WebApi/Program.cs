@@ -37,6 +37,28 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(5001);
 });
 
+string configPath = "/app/config";
+
+if (Directory.Exists(configPath))
+{
+    foreach (var file in Directory.GetFiles(configPath))
+    {
+        var key = Path.GetFileName(file);
+        var value = File.ReadAllText(file).Trim();
+
+        builder.Configuration.AddInMemoryCollection(new[]
+        {
+            new KeyValuePair<string, string>(key.Replace("__", ":"), value)
+        });
+
+        Console.WriteLine($"Loaded config from file: {key} = {value}");
+    }
+}
+else
+{
+    Console.WriteLine($"Config path not found: {configPath}. Running with default configuration.");
+}
+
 // Serilog
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -149,7 +171,7 @@ builder.Services.AddHostedService<KafkaConsumerService>();
 builder.Services
     .AddHttpClient<IAuthorHttpService, AuthorHttpService>(client =>
     {
-        client.BaseAddress = new Uri("http://authorsapi:5002");
+        client.BaseAddress = new Uri(builder.Configuration["AuthorsApi:BaseUrl"]);
     })
     .AddResilienceHandler(
         "AuthorsApiPipeline",

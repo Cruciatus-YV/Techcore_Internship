@@ -38,24 +38,27 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.Gateway
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{923264B7-74AD-4CF2-AC5C-DDD7A3DA5F2B}"
 	ProjectSection(SolutionItems) = preProject
-		appsettings.k8s.json = appsettings.k8s.json
-		authors-api-deployment.yaml = authors-api-deployment.yaml
-		authors-api-service.yaml = authors-api-service.yaml
+		authorsapi-deployment.yaml = authorsapi-deployment.yaml
+		configmap-bookservice.yaml = configmap-bookservice.yaml
+		ingress.yml = ingress.yml
 		kafka-deployment-wurstmeister.yaml = kafka-deployment-wurstmeister.yaml
 		kafka-service-wurstmeister.yaml = kafka-service-wurstmeister.yaml
 		loki-deployment.yaml = loki-deployment.yaml
 		mongo-deployment.yml = mongo-deployment.yml
+		ocelot-gateway.yaml = ocelot-gateway.yaml
 		postgres-deployment.yml = postgres-deployment.yml
 		postgres-pvc.yml = postgres-pvc.yml
 		postgres-service.yml = postgres-service.yml
 		rabbitmq-deployment.yml = rabbitmq-deployment.yml
 		redis-deployment.yml = redis-deployment.yml
+		secret-app.yaml = secret-app.yaml
 		web-api-deployment.yaml = web-api-deployment.yaml
-		web-api-service.yaml = web-api-service.yaml
 		zipkin-deployment.yml = zipkin-deployment.yml
 		zookeeper-deployment.yaml = zookeeper-deployment.yaml
 		zookeeper-service.yaml = zookeeper-service.yaml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techcore_Internship.Gateway.Ocelot", "Techcore_Internship.Gateway.Ocelot\Techcore_Internship.Gateway.Ocelot.csproj", "{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -211,6 +214,18 @@ Global
 		{B249A36A-7660-460A-A225-708D9F962688}.Release|x64.Build.0 = Release|Any CPU
 		{B249A36A-7660-460A-A225-708D9F962688}.Release|x86.ActiveCfg = Release|Any CPU
 		{B249A36A-7660-460A-A225-708D9F962688}.Release|x86.Build.0 = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|x64.Build.0 = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Debug|x86.Build.0 = Debug|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|x64.ActiveCfg = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|x64.Build.0 = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|x86.ActiveCfg = Release|Any CPU
+		{99CE05F6-0C84-4BE0-B030-E41CC3E7BB5C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

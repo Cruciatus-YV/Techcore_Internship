@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-ocelot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-ocelot
+  template:
+    metadata:
+      labels:
+        app: gateway-ocelot
+    spec:
+      containers:
+      - name: gateway-ocelot
+        image: gateway-ocelot:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5005
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5005
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-ocelot
+spec:
+  selector:
+    app: gateway-ocelot
+  ports:
+  - port: 80
+    targetPort: 5005
+    nodePort: 30005
+  type: NodePort
